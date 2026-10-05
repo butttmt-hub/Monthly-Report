@@ -1,0 +1,1349 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TMT Transportation Maintenance Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&family=IBM+Plex+Sans+Thai:wght@500;600;700&display=swap">
+<style>
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    .dash {
+      font-family: 'Noto Sans Thai', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100%;
+      transition: background .25s ease, color .25s ease;
+      display: flex;
+      align-items: stretch;
+    }
+    .dash h1, .dash h2, .dash h3 { font-family: 'IBM Plex Sans Thai', 'Noto Sans Thai', system-ui, sans-serif; margin: 0; }
+    .dash a { color: var(--accent2); }
+    .dash a:hover { color: var(--primary-strong); }
+
+    /* sidebar */
+    .sidebar { width: 216px; flex-shrink: 0; background: #0C3843; display: flex; flex-direction: column; padding: 22px 0 18px; position: sticky; top: 0; align-self: flex-start; height: 100vh; min-height: 560px; overflow-y: auto; }
+    .sidebar-brand { display: flex; align-items: center; gap: 10px; padding: 0 20px 20px; margin-bottom: 12px; border-bottom: 1px solid rgba(245,241,230,0.14); }
+    .sidebar-brand-badge { width: 32px; height: 32px; border-radius: 9px; background: #FDC440; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .sidebar-brand-title { font-size: 12px; font-weight: 800; color: #F5F1E6; line-height: 1.35; }
+    .sidebar-nav-label { font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; color: rgba(245,241,230,0.4); text-transform: uppercase; padding: 0 20px; margin-bottom: 6px; }
+    .sidebar-nav { display: flex; flex-direction: column; gap: 3px; padding: 0 12px; }
+    .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; color: rgba(245,241,230,0.68); cursor: pointer; user-select: none; }
+    .nav-item:hover { background: rgba(245,241,230,0.07); color: #F5F1E6; }
+    .nav-item.active { background: rgba(253,196,64,0.15); color: #FDC440; }
+    .nav-item .nav-icon { width: 16px; height: 16px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; }
+    .nav-item-sub { font-size: 9.5px; font-weight: 600; color: rgba(245,241,230,0.4); padding: 2px 12px 4px 42px; margin-top: -3px; }
+    .sidebar-foot { margin-top: auto; padding: 16px 20px 0; font-size: 9.5px; color: rgba(245,241,230,0.4); line-height: 1.7; }
+    .dash-main { flex: 1; min-width: 0; }
+
+    .wrap { max-width: 1360px; margin: 0 auto; padding: 0 28px 64px; }
+
+    /* header */
+    .topbar { background: var(--primary); color: #F5F1E6; padding: 22px 28px; }
+    .topbar-inner { max-width: 1360px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+    .brand { display: flex; align-items: center; gap: 14px; }
+    .brand-badge { width: 42px; height: 42px; border-radius: 10px; background: var(--secondary); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .brand-title { font-size: 19px; font-weight: 700; line-height: 1.25; }
+    .brand-sub { font-size: 12.5px; color: #C7D6D9; margin-top: 2px; }
+    .period-pill { background: rgba(245,241,230,0.12); border: 1px solid rgba(245,241,230,0.25); border-radius: 999px; padding: 7px 16px; font-size: 13px; font-weight: 600; color: #F5F1E6; }
+    .theme-btn { display: flex; align-items: center; gap: 8px; background: rgba(245,241,230,0.12); border: 1px solid rgba(245,241,230,0.25); border-radius: 999px; padding: 7px 14px 7px 10px; font-size: 12.5px; font-weight: 600; color: #F5F1E6; cursor: pointer; }
+    .theme-btn:hover { background: rgba(245,241,230,0.22); }
+
+    /* section shell */
+    .section { padding-top: 44px; }
+    .section-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
+    .section-num { display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 7px; background: var(--primary); color: #F5F1E6; font-size: 12.5px; font-weight: 700; margin-right: 10px; }
+    .section-title { font-size: 20px; font-weight: 700; color: var(--text); display: inline-flex; align-items: center; }
+    .section-desc { font-size: 13px; color: var(--muted); margin: 6px 0 20px; }
+    .month-select-wrap { display: flex; align-items: center; gap: 8px; }
+    .month-select-label { font-size: 11.5px; font-weight: 700; color: var(--muted); }
+    .month-select { appearance: none; -webkit-appearance: none; background: var(--card); color: var(--text); border: 1.5px solid var(--border); border-radius: 999px; padding: 8px 34px 8px 16px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%235A6C72' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 14px center; }
+    .month-select:hover { border-color: var(--primary); }
+
+    /* cards */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+    .kpi-card { padding: 18px 16px; display: flex; flex-direction: column; gap: 10px; }
+    .kpi-label { font-size: 12px; color: var(--muted); font-weight: 600; }
+    .kpi-value { font-size: 24px; font-weight: 800; color: var(--text); line-height: 1.1; }
+    .kpi-unit { font-size: 12px; font-weight: 600; color: var(--muted); }
+    .kpi-chg-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    .chip { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; font-weight: 700; padding: 3px 8px; border-radius: 999px; }
+    .chip-up-bad { background: rgba(255,106,5,0.14); color: var(--accent2); }
+    .chip-up-good { background: rgba(12,56,67,0.10); color: var(--primary-strong); }
+    .chip-down-good { background: rgba(139,186,222,0.22); color: var(--primary-strong); }
+    .chip-down-bad { background: rgba(255,106,5,0.14); color: var(--accent2); }
+    .chip-flat { background: var(--chip-flat-bg); color: var(--muted); }
+    .chip-label { font-size: 10.5px; color: var(--muted); font-weight: 600; }
+
+    .grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; }
+
+    /* bar rows */
+    .bar-row { display: grid; grid-template-columns: 168px 1fr 108px; align-items: center; gap: 14px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+    .bar-row:last-child { border-bottom: none; }
+    .bar-name { font-size: 13px; font-weight: 600; color: var(--text); }
+    .bar-sub { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+    .bar-track { position: relative; height: 20px; background: var(--track); border-radius: 6px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; }
+    .bar-val { text-align: right; font-size: 13px; font-weight: 700; color: var(--text); }
+    .bar-val-sub { text-align: right; font-size: 11px; color: var(--muted); font-weight: 600; }
+
+    .insight-box { margin-top: 18px; border-radius: 12px; background: var(--insight-bg); border: 1px solid var(--insight-border); }
+    .insight-box summary { list-style: none; cursor: pointer; padding: 11px 16px; display: flex; gap: 10px; align-items: center; font-size: 12.5px; font-weight: 700; color: var(--text); user-select: none; -webkit-user-select: none; }
+    .insight-box summary::-webkit-details-marker { display: none; }
+    .insight-box summary .ic { font-size: 15px; line-height: 1; flex-shrink: 0; }
+    .insight-box summary .lbl { flex: 1; }
+    .insight-box summary .chev { font-size: 10px; color: var(--muted); transition: transform .15s ease; flex-shrink: 0; }
+    .insight-box[open] summary .chev { transform: rotate(90deg); }
+    .insight-box[open] summary { border-bottom: 1px solid var(--insight-border); }
+    .insight-box .txt { font-size: 12.5px; line-height: 1.6; color: var(--text); padding: 12px 16px 14px 41px; }
+    .insight-box .txt b { color: var(--primary-strong); }
+    .insight-warn { background: rgba(255,106,5,0.08); border-color: rgba(255,106,5,0.30); }
+    .insight-warn[open] summary { border-bottom-color: rgba(255,106,5,0.30); }
+
+    .legend-row { display: flex; gap: 18px; flex-wrap: wrap; font-size: 11.5px; color: var(--muted); font-weight: 600; margin-top: 14px; }
+    .legend-dot { display: inline-block; width: 9px; height: 9px; border-radius: 3px; margin-right: 5px; vertical-align: -1px; }
+
+    .heatmap-legend { display: flex; gap: 22px; flex-wrap: wrap; align-items: center; font-size: 11.5px; color: var(--muted); font-weight: 600; margin-bottom: 4px; }
+    .heatmap-legend .dot { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+    .heatmap-note { font-size: 10.5px; color: var(--muted); font-style: italic; margin-top: 10px; }
+    .heatmap-flex { display: flex; gap: 26px; align-items: flex-start; flex-wrap: wrap; margin-top: 14px; }
+    .heatmap-mapcol { flex: 0 0 300px; max-width: 300px; }
+    .heatmap-mapcol svg { display: block; width: 100%; height: auto; }
+    .heatmap-listcol { flex: 1 1 380px; min-width: 320px; }
+    .heatmap-listcol .list-title { font-size: 13px; font-weight: 700; color: var(--text); margin-bottom: 10px; }
+
+    .case-table { width: 100%; border-collapse: collapse; margin-top: 4px; min-width: 640px; }
+    .case-table th { text-align: left; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.03em; padding: 10px 10px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+    .case-table td { font-size: 12px; padding: 10px 10px; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; white-space: nowrap; }
+    .case-table tr:last-child td { border-bottom: none; }
+    .case-plate { font-weight: 800; }
+    .case-gap { display: inline-flex; align-items: center; justify-content: center; padding: 2px 9px; border-radius: 999px; background: var(--track); font-size: 10.5px; font-weight: 700; color: var(--muted); }
+
+    /* table */
+    .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+    .tbl th { text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .03em; color: var(--muted); font-weight: 700; padding: 8px 10px; border-bottom: 2px solid var(--border); }
+    .tbl td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text); }
+    .tbl tr:last-child td { border-bottom: none; }
+    .tbl .num { text-align: right; font-variant-numeric: tabular-nums; }
+
+    .cat-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin-top: 18px; }
+    .cat-card { padding: 16px; }
+    .cat-card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px; }
+    .cat-card-title { font-size: 13.5px; font-weight: 700; color: var(--text); }
+    .cat-card-total { font-size: 11.5px; color: var(--muted); font-weight: 600; margin-bottom: 10px; }
+    .veh-row { display: flex; align-items: center; justify-content: space-between; padding: 5px 0; font-size: 12px; border-top: 1px dashed var(--border); }
+    .veh-row:first-of-type { border-top: none; }
+    .veh-plate { font-weight: 700; color: var(--text); }
+    .veh-meta { color: var(--muted); font-weight: 500; }
+    .rank-badge { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 5px; background: var(--track); font-size: 10px; font-weight: 800; color: var(--muted); margin-right: 6px; }
+
+    .footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--border); font-size: 11.5px; color: var(--muted); line-height: 1.7; }
+
+    .veh-grid { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 14px; margin-top: 16px; }
+    .veh-card { padding: 14px 14px 12px; }
+    .veh-card-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 12px; gap: 6px; }
+    .veh-card-title { font-size: 12.5px; font-weight: 700; color: var(--text); }
+    .veh-card-total { font-size: 10px; color: var(--muted); font-weight: 600; white-space: nowrap; }
+    .mini-chart { display: flex; align-items: flex-end; gap: 6px; padding: 0 2px; }
+    .mini-col { flex: 1; display: flex; flex-direction: column; align-items: center; min-width: 0; }
+    .mini-val { font-size: 10px; font-weight: 800; color: var(--text); margin-bottom: 4px; }
+    .mini-bar-track { height: 66px; width: 100%; display: flex; align-items: flex-end; justify-content: center; }
+    .mini-bar { width: 68%; max-width: 24px; border-radius: 4px 4px 0 0; border: 1px solid rgba(12,56,67,0.18); }
+    .mini-label { font-size: 8.5px; color: var(--muted); font-weight: 600; margin-top: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    .mini-flag { font-size: 8.5px; color: #FF6A05; font-weight: 700; margin-top: 1px; }
+    .mini-count { font-size: 8px; color: var(--muted); font-weight: 600; margin-top: 1px; opacity: 0.85; }
+
+    .hbar-list { display: flex; flex-direction: column; gap: 9px; margin-top: 12px; }
+    .hbar-row { display: grid; grid-template-columns: 68px 1fr 44px; align-items: center; gap: 8px; }
+    .hbar-plate-wrap { min-width: 0; }
+    .hbar-plate { font-size: 10.5px; font-weight: 700; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .hbar-count { font-size: 8px; color: var(--muted); font-weight: 600; opacity: 0.85; display: block; }
+    .hbar-track { height: 9px; background: var(--track); border-radius: 3px; overflow: hidden; }
+    .hbar-fill { height: 100%; border-radius: 3px; background: #4C8FA6; }
+    .hbar-val { font-size: 10px; font-weight: 800; color: var(--text); text-align: right; white-space: nowrap; }
+
+    @media (max-width: 1100px) {
+      .kpi-grid { grid-template-columns: repeat(3, minmax(0,1fr)); }
+      .grid-2 { grid-template-columns: 1fr; }
+      .cat-grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+  </style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const KPI_MONTHLY = {"2025-10":{"label":"ตุลาคม 2025","shortLabel":"ต.ค.25","rate":0.0,"num":0,"den":27,"rate_nt":0.0,"num_nt":0,"den_nt":23,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"ก.ย.25","yoy_label":"ต.ค.24","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":44,"yoy_num":0,"yoy_den":36,"cases":[],"categories":[{"cat":"ระบบเครื่องยนต์","num":0,"den":5,"rate":0.0},{"cat":"ค่ายาง","num":0,"den":4,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":4,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":4,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":3,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":3,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":2,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":2,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":0,"rate":0.0}]},"2025-11":{"label":"พฤศจิกายน 2025","shortLabel":"พ.ย.25","rate":0.0,"num":0,"den":44,"rate_nt":0.0,"num_nt":0,"den_nt":33,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"ต.ค.25","yoy_label":"พ.ย.24","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":27,"yoy_num":0,"yoy_den":37,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":11,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":7,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":7,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":6,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":6,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":4,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":2,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":1,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":0,"rate":0.0}]},"2025-12":{"label":"ธันวาคม 2025","shortLabel":"ธ.ค.25","rate":0.0,"num":0,"den":44,"rate_nt":0.0,"num_nt":0,"den_nt":32,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"พ.ย.25","yoy_label":"ธ.ค.24","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":44,"yoy_num":0,"yoy_den":33,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":12,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":11,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":4,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":4,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":3,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":3,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":3,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":2,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":2,"rate":0.0}]},"2026-01":{"label":"มกราคม 2026","shortLabel":"ม.ค.26","rate":0.0,"num":0,"den":37,"rate_nt":0.0,"num_nt":0,"den_nt":29,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"ธ.ค.25","yoy_label":"ม.ค.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":44,"yoy_num":0,"yoy_den":30,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":8,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":6,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":6,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":5,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":4,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":3,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":2,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":2,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":1,"rate":0.0}]},"2026-02":{"label":"กุมภาพันธ์ 2026","shortLabel":"ก.พ.26","rate":0.0,"num":0,"den":38,"rate_nt":0.0,"num_nt":0,"den_nt":23,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"ม.ค.26","yoy_label":"ก.พ.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":37,"yoy_num":0,"yoy_den":33,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":15,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":6,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":5,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":4,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":3,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":3,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":2,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":0,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":0,"rate":0.0}]},"2026-03":{"label":"มีนาคม 2026","shortLabel":"มี.ค.26","rate":0.0,"num":0,"den":27,"rate_nt":0.0,"num_nt":0,"den_nt":18,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"ก.พ.26","yoy_label":"มี.ค.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":38,"yoy_num":0,"yoy_den":31,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":9,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":4,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":3,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":3,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":3,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":3,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":2,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":0,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":0,"rate":0.0}]},"2026-04":{"label":"เมษายน 2026","shortLabel":"เม.ย.26","rate":0.0,"num":0,"den":46,"rate_nt":0.0,"num_nt":0,"den_nt":25,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"มี.ค.26","yoy_label":"เม.ย.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":27,"yoy_num":0,"yoy_den":27,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":21,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":6,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":5,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":5,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":4,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":3,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":1,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":1,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":0,"rate":0.0}]},"2026-05":{"label":"พฤษภาคม 2026","shortLabel":"พ.ค.26","rate":0.0,"num":0,"den":33,"rate_nt":0.0,"num_nt":0,"den_nt":21,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"เม.ย.26","yoy_label":"พ.ค.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":46,"yoy_num":0,"yoy_den":27,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":12,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":5,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":4,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":4,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":3,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":3,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":1,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":1,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":0,"rate":0.0}]},"2026-06":{"label":"มิถุนายน 2026","shortLabel":"มิ.ย.26","rate":3.2,"num":1,"den":31,"rate_nt":5.3,"num_nt":1,"den_nt":19,"mom_pp":3.2,"yoy_pp":3.2,"mom_nt_pp":5.3,"yoy_nt_pp":5.3,"prev_label":"พ.ค.26","yoy_label":"มิ.ย.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":33,"yoy_num":0,"yoy_den":35,"cases":[{"plate":"96-2579","cat":"ระบบไฟ","prev":"2 มิ.ย.","this":"4 มิ.ย.","gap":2,"desc":"เช็คระบบไฟ","price":10090}],"categories":[{"cat":"ระบบไฟ","num":1,"den":9,"rate":11.1},{"cat":"ค่ายาง","num":0,"den":12,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":4,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":2,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":2,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":1,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":1,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":0,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":0,"rate":0.0}]},"2026-07":{"label":"กรกฎาคม 2026","shortLabel":"ก.ค.26","rate":0.0,"num":0,"den":43,"rate_nt":0.0,"num_nt":0,"den_nt":33,"mom_pp":-3.2,"yoy_pp":0.0,"mom_nt_pp":-5.3,"yoy_nt_pp":0.0,"prev_label":"มิ.ย.26","yoy_label":"ก.ค.25","prev_rate":3.2,"yoy_rate":0.0,"prev_rate_nt":5.3,"yoy_rate_nt":0.0,"prev_num":1,"prev_den":31,"yoy_num":0,"yoy_den":40,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":10,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":10,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":8,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":4,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":4,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":2,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":2,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":2,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":1,"rate":0.0}]},"2026-08":{"label":"สิงหาคม 2026","shortLabel":"ส.ค.26","rate":0.0,"num":0,"den":46,"rate_nt":0.0,"num_nt":0,"den_nt":32,"mom_pp":0.0,"yoy_pp":-2.2,"mom_nt_pp":0.0,"yoy_nt_pp":-3.3,"prev_label":"ก.ค.26","yoy_label":"ส.ค.25","prev_rate":0.0,"yoy_rate":2.2,"prev_rate_nt":0.0,"yoy_rate_nt":3.3,"prev_num":0,"prev_den":43,"yoy_num":1,"yoy_den":45,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":14,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":6,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":6,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":6,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":5,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":4,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":3,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":1,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":1,"rate":0.0}]},"2026-09":{"label":"กันยายน 2026","shortLabel":"ก.ย.26","rate":0.0,"num":0,"den":29,"rate_nt":0.0,"num_nt":0,"den_nt":21,"mom_pp":0.0,"yoy_pp":0.0,"mom_nt_pp":0.0,"yoy_nt_pp":0.0,"prev_label":"ส.ค.26","yoy_label":"ก.ย.25","prev_rate":0.0,"yoy_rate":0.0,"prev_rate_nt":0.0,"yoy_rate_nt":0.0,"prev_num":0,"prev_den":46,"yoy_num":0,"yoy_den":44,"cases":[],"categories":[{"cat":"ค่ายาง","num":0,"den":8,"rate":0.0},{"cat":"ระบบปรับอากาศ","num":0,"den":7,"rate":0.0},{"cat":"ระบบช่วงล่าง","num":0,"den":5,"rate":0.0},{"cat":"ระบบไฟ","num":0,"den":4,"rate":0.0},{"cat":"ระบบเครื่องยนต์","num":0,"den":3,"rate":0.0},{"cat":"ระบบเบรค","num":0,"den":1,"rate":0.0},{"cat":"ระบบเฮี้ยบ","num":0,"den":1,"rate":0.0},{"cat":"ระบบส่งกำลัง","num":0,"den":0,"rate":0.0},{"cat":"อื่น ๆ อุปกรณ์เกี่ยวกับรถ","num":0,"den":0,"rate":0.0}]}};
+const MONTHS_ORDER = ['2025-10','2025-11','2025-12','2026-01','2026-02','2026-03','2026-04','2026-05','2026-06','2026-07','2026-08','2026-09'];
+
+function chipInfo(pp, label) {
+  const abs = Math.abs(pp).toFixed(1);
+  if (pp === 0) return { cls: 'chip-flat', txt: abs + 'pp ' + label + ' (ทรงตัว)' };
+  if (pp > 0) return { cls: 'chip-up-bad', txt: '▲ ' + abs + 'pp ' + label };
+  return { cls: 'chip-up-good', txt: '▼ ' + abs + 'pp ' + label };
+}
+function thb(n) {
+  return '฿' + Number(n).toLocaleString('en-US');
+}
+function trendWord(pp) {
+  if (pp > 0) return 'เพิ่มขึ้น +' + pp.toFixed(1) + 'pp';
+  if (pp < 0) return 'ลดลง ' + pp.toFixed(1) + 'pp';
+  return 'ทรงตัว (ไม่เปลี่ยนแปลง)';
+}
+
+const state = { theme: 'light', page: 'report', kpiMonth: '2026-09' };
+
+function renderVals() {
+    const dark = state.theme === 'dark';
+    const onKpi = state.page === 'kpi';
+    const kd = KPI_MONTHLY[state.kpiMonth];
+
+    // ---- KPI cards ----
+    const chipMomAll = chipInfo(kd.mom_pp, 'MoM');
+    const chipYoyAll = chipInfo(kd.yoy_pp, 'YoY');
+    const chipMomNt = chipInfo(kd.mom_nt_pp, 'MoM');
+    const chipYoyNt = chipInfo(kd.yoy_nt_pp, 'YoY');
+
+    // ---- trend chart per-point highlight (only "all" series gets highlighted) ----
+    const chartVals = {};
+    MONTHS_ORDER.forEach((mk, i) => {
+      const sel = mk === state.kpiMonth;
+      chartVals['a' + i + 'R'] = sel ? '4.5' : '2';
+      chartVals['a' + i + 'Fill'] = sel ? '#FF6A05' : '#4C8FA6';
+      chartVals['a' + i + 'Stroke'] = sel ? 'var(--card)' : 'none';
+      chartVals['a' + i + 'SW'] = sel ? '2' : '0';
+      chartVals['a' + i + 'Size'] = sel ? '10.5' : '8';
+      chartVals['a' + i + 'Weight'] = sel ? '800' : '700';
+      chartVals['a' + i + 'Color'] = sel ? '#FF6A05' : 'var(--muted)';
+      chartVals['ax' + i] = sel ? 'color:#FF6A05;font-weight:800;' : '';
+    });
+
+    // ---- K2 category breakdown — follows the selected KPI month (changed 3 ก.ย. 2026 ตอนเย็น
+    //      ตามคำขอผู้ใช้ "ตรงนี้เวลาเปลี่ยนเดือนให้เปลี่ยนข้อมูลตามด้วย"; was cumulative before) ----
+    const monthCats = kd.categories || [];
+    const catSorted = [...monthCats].sort((a, b) => (b.rate - a.rate) || (b.den - a.den));
+    const maxCatRate = Math.max(...catSorted.map(c => c.rate), 0.1);
+    const catVals = {};
+    catSorted.forEach((c, i) => {
+      catVals['cat' + i + 'Name'] = c.cat;
+      catVals['cat' + i + 'Sub'] = c.num + ' จาก ' + c.den + ' งาน';
+      catVals['cat' + i + 'Width'] = (c.rate / maxCatRate * 100).toFixed(1) + '%';
+      catVals['cat' + i + 'Val'] = c.rate.toFixed(1) + '%';
+    });
+    const topCats = monthCats.filter(c => c.num > 0).sort((a, b) => b.rate - a.rate);
+    const topCatPhrase = topCats.length === 0
+      ? 'ยังไม่พบหมวดใดที่มีเคสเข้าเกณฑ์ซ่อมซ้ำเคสเดิมในเดือนนี้'
+      : 'หมวดที่มีเคสเข้าเกณฑ์ซ่อมซ้ำเคสเดิมในเดือนนี้คือ ' + topCats.map(c => c.cat + ' (' + c.num + ' เคส, ' + c.rate.toFixed(1) + '%)').join(' และ ') + ' ส่วนหมวดอื่นยังไม่พบเคสที่เข้าเกณฑ์ในเดือนนี้';
+    const topCatNames = topCats.map(c => c.cat).join('/');
+
+    // ---- case table rows (max 3 cases observed across all filterable months) ----
+    const cases = kd.cases || [];
+    const rowVals = {};
+    for (let i = 0; i < 3; i++) {
+      const c = cases[i];
+      if (c) {
+        rowVals['row' + i + 'Display'] = 'table-row';
+        rowVals['row' + i + 'Plate'] = c.plate;
+        rowVals['row' + i + 'Cat'] = c.cat;
+        rowVals['row' + i + 'Prev'] = c.prev;
+        rowVals['row' + i + 'This'] = c.this;
+        rowVals['row' + i + 'Gap'] = c.gap + ' วัน';
+        rowVals['row' + i + 'Desc'] = c.desc;
+        rowVals['row' + i + 'Price'] = thb(c.price);
+      } else {
+        rowVals['row' + i + 'Display'] = 'none';
+        rowVals['row' + i + 'Plate'] = '';
+        rowVals['row' + i + 'Cat'] = '';
+        rowVals['row' + i + 'Prev'] = '';
+        rowVals['row' + i + 'This'] = '';
+        rowVals['row' + i + 'Gap'] = '';
+        rowVals['row' + i + 'Desc'] = '';
+        rowVals['row' + i + 'Price'] = '';
+      }
+    }
+    const noCasesDisplay = cases.length === 0 ? 'table-row' : 'none';
+
+    // ---- K3 section-desc + insight text ----
+    const k3DescTxt = cases.length === 0
+      ? 'ไม่มีงานซ่อมที่เข้าเกณฑ์ "ซ่อมซ้ำเคสเดิม" ในเดือนนี้ ตามวิธีคำนวณด้านบน'
+      : cases.length + ' งาน ที่เข้าเกณฑ์ "ซ่อมซ้ำเคสเดิม" ตามวิธีคำนวณด้านบน (คำอธิบายงานตรงกันทุกตัวอักษร)';
+    let k3InsightTxt;
+    if (cases.length === 0) {
+      k3InsightTxt = 'เดือนนี้ไม่มีงานซ่อมที่เข้าเกณฑ์ "ซ่อมซ้ำเคสเดิม" จากข้อมูลที่มี — การไม่มีเคสไม่ได้แปลว่าไม่มีปัญหาซ่อมบำรุงเลย เพียงแต่ไม่มีรถคันเดิมที่กลับมาซ่อมด้วยปัญหาเดียวกันซ้ำภายในเดือนปฏิทินนี้ (หมายเหตุ: เคสที่ซ่อมปลายเดือนนี้แล้วไปซ่อมซ้ำต้นเดือนถัดไปจะไม่ถูกนับในเดือนใดเลยภายใต้นิยามนี้) — เป็น Analytical Flag จากข้อมูลที่มี ไม่ใช่ข้อสรุปสาเหตุที่ยืนยันแล้ว';
+    } else if (cases.length === 1) {
+      const c = cases[0];
+      k3InsightTxt = 'เดือนนี้มีเพียง 1 เคสที่เข้าเกณฑ์ซ่อมซ้ำเคสเดิม คือ ทะเบียน ' + c.plate + ' หมวด' + c.cat + ' — "' + c.desc + '" เกิดซ้ำภายใน ' + c.gap + ' วัน (' + c.prev + ' → ' + c.this + ') ควรตรวจสอบสาเหตุที่ปัญหานี้กลับมาเกิดซ้ำในระยะเวลาสั้น — เป็น Analytical Flag จากข้อมูลที่มี ไม่ใช่ข้อสรุปสาเหตุที่ยืนยันแล้ว';
+    } else {
+      const plates = cases.map(c => c.plate).join(', ');
+      k3InsightTxt = 'เดือนนี้มี ' + cases.length + ' เคส ที่เข้าเกณฑ์ซ่อมซ้ำเคสเดิม ได้แก่ ทะเบียน ' + plates + ' ควรตรวจสอบแต่ละเคสในตารางด้านบนเป็นรายคัน — เป็น Analytical Flag จากข้อมูลที่มี ไม่ใช่ข้อสรุปสาเหตุที่ยืนยันแล้ว';
+    }
+
+    // ---- K1 What/Why/Action insight box ----
+    const whatHappenedTxt = 'อัตราซ่อมซ้ำเคสเดิมเดือน ' + kd.shortLabel + ' อยู่ที่ ' + kd.rate.toFixed(1) + '% (' + kd.num + ' จาก ' + kd.den + ' งาน) ' + trendWord(kd.mom_pp) + ' จากเดือนก่อน (' + kd.prev_label + ') ที่ ' + kd.prev_rate.toFixed(1) + '% แต่เทียบช่วงเดียวกันปีก่อน (' + kd.yoy_label + ') ' + trendWord(kd.yoy_pp) + ' (' + kd.yoy_rate.toFixed(1) + '%) — ส่วนเวอร์ชันไม่รวมค่ายางอยู่ที่ ' + kd.rate_nt.toFixed(1) + '% (' + kd.num_nt + ' จาก ' + kd.den_nt + ' งาน) ' + trendWord(kd.yoy_nt_pp) + ' จากปีก่อน (' + kd.yoy_rate_nt.toFixed(1) + '%)';
+
+    const whyTxt = cases.length === 0
+      ? 'ยังไม่สามารถระบุสาเหตุที่แน่ชัดได้จากข้อมูลที่มี เนื่องจากไม่มี Case ID เชื่อมโยงงานซ่อมที่มาจากปัญหาเดียวกัน — เดือนนี้ไม่มีเคสที่เข้าเกณฑ์ซ่อมซ้ำเคสเดิม (อาจเป็นเพราะไม่มีเคสจริง หรือมีเคสที่ซ่อมซ้ำแต่คาบเกี่ยวรอยต่อเดือนพอดีจึงไม่ถูกนับภายใต้นิยามนี้) จากข้อมูลเดือนนี้ (ดูกราฟด้านล่าง) ' + topCatPhrase
+      : 'ยังไม่สามารถระบุสาเหตุที่แน่ชัดได้จากข้อมูลที่มี เนื่องจากไม่มี Case ID เชื่อมโยงงานซ่อมที่มาจากปัญหาเดียวกัน แต่จากข้อมูลเดือนนี้ (ดูกราฟด้านล่าง) ' + topCatPhrase + ' — เดือนนี้พบ ' + cases.length + ' เคส ในหมวด ' + [...new Set(cases.map(c => c.cat))].join(', ');
+
+    const actionTxt = cases.length === 0
+      ? 'ไม่มีเคสที่ต้องตรวจสอบเพิ่มเติมในเดือนนี้' + (topCatNames ? ' ให้ความสำคัญกับหมวด' + topCatNames + 'ที่มีเคสซ่อมซ้ำเคสเดิมในเดือนนี้ (อาจสะท้อนงานซ่อมที่ยังแก้ไม่หายขาด)' : '') + ' ควรผลักดันให้ SAP บันทึกเลข Notification/Case ID ทุกงานซ่อม เพื่อให้วัด "ซ่อมซ้ำเคสเดิม" ได้แม่นยำกว่านี้ และไม่พลาดเคสที่คาบเกี่ยวรอยต่อเดือนหรือบรรยายด้วยคำคนละแบบ'
+      : 'ตรวจสอบ' + (cases.length === 1 ? 'เคสที่พบเดือนนี้' : 'เคสทั้ง ' + cases.length + ' รายการที่พบเดือนนี้') + ' (' + cases.map(c => c.plate + ' ' + c.desc).join(', ') + ' — ตารางด้านล่าง)' + (topCatNames ? ' และให้ความสำคัญกับหมวด' + topCatNames + 'ที่มีเคสซ่อมซ้ำเคสเดิมในเดือนนี้' : '') + ' ควรผลักดันให้ SAP บันทึกเลข Notification/Case ID ทุกงานซ่อม เพื่อให้วัด "ซ่อมซ้ำเคสเดิม" ได้แม่นยำกว่านี้ และไม่พลาดเคสที่คาบเกี่ยวรอยต่อเดือนหรือบรรยายด้วยคำคนละแบบ';
+
+    return {
+      navReportActive: onKpi ? '' : 'active',
+      navKpiActive: onKpi ? 'active' : '',
+      reportDisplay: onKpi ? 'none' : 'block',
+      kpiDisplay: onKpi ? 'block' : 'none',
+      pageTitle: onKpi ? 'KPI: อัตราซ่อมซ้ำเคสเดิม' : 'Transportation Maintenance Dashboard',
+      pageSub: onKpi ? 'Repeat Repair Rate (เคสเดิม) · ตัวชี้วัดคุณภาพงานซ่อม' : 'Monthly Report · ต้นทุนขนส่ง / ค่าซ่อม / เที่ยววิ่ง',
+      periodPillLabel: onKpi ? kd.label : 'กันยายน 2026',
+      kpiMonth: state.kpiMonth,
+      kdFullLabel: kd.label,
+      kdPartialNote: state.kpiMonth === '2026-09' ? ' (ยืนยันแล้วว่าไม่มีงานซ่อมเกิดขึ้นจริงหลังวันที่ 17 ก.ย. 2026 — ยอดเต็มเดือน ไม่ใช่ข้อมูลขาด)' : '',
+      kdRateAll: kd.rate.toFixed(1) + '%',
+      kdNumDen: kd.num + ' จาก ' + kd.den + ' งาน',
+      kdRateNt: kd.rate_nt.toFixed(1) + '%',
+      kdNumDenNt: kd.num_nt + ' จาก ' + kd.den_nt + ' งาน',
+      kdDen: kd.den,
+      kdPrevDen: kd.prev_den,
+      kdNum: kd.num,
+      kdPrevNum: kd.prev_num,
+      chipMomAllCls: chipMomAll.cls, chipMomAllTxt: chipMomAll.txt,
+      chipYoyAllCls: chipYoyAll.cls, chipYoyAllTxt: chipYoyAll.txt,
+      chipMomNtCls: chipMomNt.cls, chipMomNtTxt: chipMomNt.txt,
+      chipYoyNtCls: chipYoyNt.cls, chipYoyNtTxt: chipYoyNt.txt,
+      ...chartVals,
+      ...catVals,
+      ...rowVals,
+      noCasesDisplay: noCasesDisplay,
+      k3DescTxt: k3DescTxt,
+      k3InsightTxt: k3InsightTxt,
+      whatHappenedTxt: whatHappenedTxt,
+      whyTxt: whyTxt,
+      actionTxt: actionTxt,
+      toggleLabel: dark ? 'โหมดสว่าง' : 'โหมดมืด',
+      bg: dark ? '#0A2027' : '#F5F1E6',
+      cardBg: dark ? '#123640' : '#FFFFFF',
+      text: dark ? '#EFE9DB' : '#0C3843',
+      muted: dark ? '#9DB6BB' : '#5A6C72',
+      border: dark ? '#1E4954' : '#E6DFCF',
+      track: dark ? '#0E2C34' : '#EFEAE0',
+      chipFlatBg: dark ? '#1E4954' : '#EFEAE0',
+      insightBg: dark ? 'rgba(139,186,222,0.10)' : 'rgba(139,186,222,0.16)',
+      insightBorder: dark ? 'rgba(139,186,222,0.30)' : 'rgba(139,186,222,0.45)',
+      primaryStrong: dark ? '#8BBADE' : '#0C3843',
+      rampD1: dark ? '#3E7A94' : '#235068',
+      rampD2: dark ? '#3B7185' : '#0C3843',
+      mapNoData: dark ? '#16323C' : '#E4EDF2',
+      mapC1: dark ? '#1F4B58' : '#CFE3EE',
+      mapC2: dark ? '#2F6A7D' : '#8BBADE',
+      mapC3: dark ? '#3E7A94' : '#4C8FA6',
+      mapC4: dark ? '#5AA0BE' : '#235068',
+      mapC5: dark ? '#8BBADE' : '#0C3843',
+    };
+}
+
+const TEMPLATE = `<div class="dash" style="--bg:{{bg}}; --card:{{cardBg}}; --text:{{text}}; --muted:{{muted}}; --border:{{border}}; --track:{{track}}; --chip-flat-bg:{{chipFlatBg}}; --insight-bg:{{insightBg}}; --insight-border:{{insightBorder}}; --primary:#0C3843; --primary-strong:{{primaryStrong}}; --secondary:#FDC440; --accent2:#FF6A05; --supporting:#8BBADE; --ramp-d1:{{rampD1}}; --ramp-d2:{{rampD2}}; --map-nodata:{{mapNoData}}; --map-c1:{{mapC1}}; --map-c2:{{mapC2}}; --map-c3:{{mapC3}}; --map-c4:{{mapC4}}; --map-c5:{{mapC5}};">
+
+  <div class="sidebar">
+    <div class="sidebar-brand">
+      <div class="sidebar-brand-badge">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M3 16.5V7.5C3 6.67 3.67 6 4.5 6H14L18 10H19.5C20.33 10 21 10.67 21 11.5V16.5C21 17.33 20.33 18 19.5 18H19C19 16.34 17.66 15 16 15C14.34 15 13 16.34 13 18H11C11 16.34 9.66 15 8 15C6.34 15 5 16.34 5 18H4.5C3.67 18 3 17.33 3 16.5Z" stroke="#0C3843" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="18" r="1.8" stroke="#0C3843" stroke-width="1.6"/><circle cx="16" cy="18" r="1.8" stroke="#0C3843" stroke-width="1.6"/></svg>
+      </div>
+      <div class="sidebar-brand-title">Transportation<br>Maintenance Dashboard</div>
+    </div>
+    <div class="sidebar-nav-label">เมนู</div>
+    <div class="sidebar-nav">
+      <div class="nav-item {{navReportActive}}" data-action="goReport">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M4 19V5C4 4.45 4.45 4 5 4H19C19.55 4 20 4.45 20 5V19C20 19.55 19.55 20 19 20H5C4.45 20 4 19.55 4 19Z" stroke="currentColor" stroke-width="1.7"/><path d="M8 15V17M12 11V17M16 8V17" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></span>
+        Monthly Report
+      </div>
+      <div class="nav-item {{navKpiActive}}" data-action="goKpi">
+        <span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.2" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="4.4" stroke="currentColor" stroke-width="1.7"/><circle cx="12" cy="12" r="1.1" fill="currentColor"/></svg></span>
+        KPI
+      </div>
+      <div class="nav-item-sub">% ซ่อมซ้ำเคสเดิม</div>
+    </div>
+    <div class="sidebar-foot">กันยายน 2026<br>อัปเดตล่าสุด 1 ต.ค. 2026</div>
+  </div>
+
+  <div class="dash-main">
+
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="brand-badge">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 16.5V7.5C3 6.67 3.67 6 4.5 6H14L18 10H19.5C20.33 10 21 10.67 21 11.5V16.5C21 17.33 20.33 18 19.5 18H19C19 16.34 17.66 15 16 15C14.34 15 13 16.34 13 18H11C11 16.34 9.66 15 8 15C6.34 15 5 16.34 5 18H4.5C3.67 18 3 17.33 3 16.5Z" stroke="#0C3843" stroke-width="1.6" stroke-linejoin="round"/><circle cx="8" cy="18" r="1.8" stroke="#0C3843" stroke-width="1.6"/><circle cx="16" cy="18" r="1.8" stroke="#0C3843" stroke-width="1.6"/></svg>
+        </div>
+        <div>
+          <div class="brand-title">{{pageTitle}}</div>
+          <div class="brand-sub">{{pageSub}}</div>
+        </div>
+      </div>
+      <div style="display:flex; align-items:center; gap:10px;">
+        <div class="period-pill">รอบข้อมูล: {{periodPillLabel}}</div>
+        <div class="theme-btn" data-action="toggleTheme">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M12 3V5M12 19V21M5 12H3M21 12H19M6.3 6.3L4.9 4.9M19.1 19.1L17.7 17.7M6.3 17.7L4.9 19.1M19.1 4.9L17.7 6.3" stroke="#F5F1E6" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="12" r="4" stroke="#F5F1E6" stroke-width="1.8"/></svg>
+          {{toggleLabel}}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="wrap" style="display:{{reportDisplay}};">
+
+    <!-- ================= SECTION 1: OVERVIEW ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">1</span>Management Overview</div>
+      </div>
+      <div class="section-desc">ภาพรวมต้นทุนและการใช้งานรถ ประจำเดือนกันยายน 2026 (เทียบเดือนก่อน = MoM, เทียบช่วงเดียวกันปีก่อน = YoY)</div>
+
+      <details class="insight-box">
+        <summary><span class="ic">ℹ️</span><span class="lbl">หมายเหตุข้อมูลค่าซ่อมเดือนนี้</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          รายการซ่อมล่าสุดในไฟล์ข้อมูลอยู่ที่วันที่ 17 ก.ย. 2026 — ตรวจสอบและยืนยันกับผู้ใช้แล้วว่า<b>ไม่มีงานซ่อมเกิดขึ้นจริงหลังวันที่ 17 ก.ย.</b> (ไม่ใช่ข้อมูลขาดหรือไฟล์ไม่ครบ) ดังนั้นตัวเลข <b>TOTAL MAINTENANCE COST, MAINTENANCE COST/TRIP, MAINTENANCE COST/KM</b> ด้านล่างเป็นยอดจริงทั้งเดือน การลดลง MoM/YoY ที่เห็นจึงเป็นการลดลงจริง ไม่ใช่ผลจากข้อมูลไม่ครบ — ที่น่าสังเกตคือ 13 วันสุดท้ายของเดือน (18-30 ก.ย.) ไม่มีงานซ่อมเลยแม้แต่รายการเดียว ต่างจากอัตราเฉลี่ย ~2.8 รายการ/วันในช่วง 17 วันแรก ยังไม่มีข้อมูลเพียงพอที่จะระบุสาเหตุที่แน่ชัด ควรติดตามในเดือนถัดไปว่าเป็นแนวโน้มต่อเนื่องหรือไม่
+        </div>
+      </details>
+
+      <div class="kpi-grid">
+        <div class="card kpi-card">
+          <div class="kpi-label">TOTAL MAINTENANCE COST</div>
+          <div><div class="kpi-value">฿532,886</div><div class="kpi-unit">บาท</div></div>
+          <div class="kpi-chg-row">
+            <span class="chip chip-down-good">▼ 23.5% MoM</span>
+            <span class="chip chip-down-good">▼ 16.7% YoY</span>
+          </div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">TOTAL TRIPS (1–4 DROP)</div>
+          <div><div class="kpi-value">780</div><div class="kpi-unit">เที่ยว</div></div>
+          <div class="kpi-chg-row">
+            <span class="chip chip-flat">≈ 0.0% MoM</span>
+            <span class="chip chip-down-bad">▼ 3.2% YoY</span>
+          </div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">TOTAL DISTANCE</div>
+          <div><div class="kpi-value">89,807</div><div class="kpi-unit">กม.</div></div>
+          <div class="kpi-chg-row"><span class="chip chip-flat">▲ 4.6% MoM</span></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">MAINTENANCE COST / TRIP</div>
+          <div><div class="kpi-value">฿683</div><div class="kpi-unit">บาท/เที่ยว</div></div>
+          <div class="kpi-chg-row"><span class="chip chip-down-good">▼ 23.5% MoM</span></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">MAINTENANCE COST / KM</div>
+          <div><div class="kpi-value">฿5.93</div><div class="kpi-unit">บาท/กม.</div></div>
+          <div class="kpi-chg-row"><span class="chip chip-down-good">▼ 26.8% MoM</span></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">ACTIVE VEHICLES</div>
+          <div><div class="kpi-value">34<span style="font-size:14px;color:var(--muted);font-weight:700;">/36</span></div><div class="kpi-unit">คัน (94%) · เดือนก่อน 35 คัน</div></div>
+          <div class="kpi-chg-row"><span class="chip chip-flat">คงที่ ≈ เดือนก่อน</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:13.5px; font-weight:700; color:var(--text);">แนวโน้มค่าซ่อมรถรายเดือน (12 เดือนย้อนหลัง)</div>
+          <div class="legend-row" style="margin-top:0;"><span><span class="legend-dot" style="background:#8BBADE;"></span>Maintenance Cost (บาท)</span></div>
+        </div>
+        <svg viewBox="0 0 760 170" width="100%" height="190" preserveAspectRatio="none" style="overflow:visible;">
+          <line x1="10" y1="15" x2="750" y2="15" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>
+          <line x1="10" y1="94" x2="750" y2="94" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>
+          <line x1="10" y1="155" x2="750" y2="155" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>
+          <polyline points="10.0,43.2 77.3,15.0 144.5,32.8 211.8,60.9 279.1,84.5 346.4,155.0 413.6,36.9 480.9,109.3 548.2,151.5 615.5,49.4 682.7,42.9 750.0,145.7"
+            fill="none" stroke="#8BBADE" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <circle cx="77.3" cy="15.0" r="3.5" fill="#8BBADE"/>
+          <text x="77.3" y="9" font-size="10" font-weight="700" fill="var(--muted)" text-anchor="middle">741,189 สูงสุด</text>
+          <circle cx="346.4" cy="155.0" r="3.5" fill="#8BBADE"/>
+          <text x="346.4" y="167" font-size="10" font-weight="700" fill="var(--muted)" text-anchor="middle">517,982 ต่ำสุด</text>
+          <circle cx="750.0" cy="145.7" r="4.5" fill="#FF6A05" stroke="var(--card)" stroke-width="2"/>
+          <text x="716" y="133" font-size="10.5" font-weight="800" fill="#FF6A05" text-anchor="middle">532,886</text>
+        </svg>
+        <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); font-weight:600; margin-top:6px; padding:0 2px;">
+          <span>ต.ค.25</span><span>พ.ย.25</span><span>ธ.ค.25</span><span>ม.ค.26</span><span>ก.พ.26</span><span>มี.ค.26</span><span>เม.ย.26</span><span>พ.ค.26</span><span>มิ.ย.26</span><span>ก.ค.26</span><span>ส.ค.26</span><span style="color:#FF6A05;">ก.ย.26</span>
+        </div>
+      </div>
+
+      <details class="insight-box" style="margin-top:16px;">
+        <summary><span class="ic">ℹ️</span><span class="lbl">Data Quality</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          ตรวจสอบข้อมูลค่าซ่อม (1,903 รายการ), งานจัดส่ง (25,635 รายการ) แล้ว — ไม่พบ duplicate, blank, ค่าใช้จ่ายติดลบ หรือรถ/รหัสที่ไม่สามารถจับคู่กับ Master ได้ ข้อมูลทุกคันจับคู่กลุ่มอายุรถและกรุ๊ปรถได้ครบ 100% พบรายการค่าซ่อมราคา 0 บาท 18 รายการ (เข้าใจว่าเป็นงานเคลม/ไม่มีค่าใช้จ่าย) พบรถ 6 คันมีรหัสอุปกรณ์ (Equipment ID) ซ้ำซ้อนคันละ 2 รหัสจากการเปลี่ยนรหัสในระบบ SAP (กระทบกลุ่ม TL/TL-H เป็นหลัก) และพบรถ 1 คันเปลี่ยนทะเบียนจาก 83-5391 เป็น 55-1697 (12W) เมื่อราว ม.ค. 2026 — รายงานนี้รวมข้อมูลตามคันรถจริงแล้วทุกจุด ฝูงรถจริงมี 36 คัน (ไม่ใช่ 43 รหัสอุปกรณ์/ทะเบียนที่ปรากฏในไฟล์ต้นทาง) ตัวเลขในรายงานนี้อ้างอิงข้อมูลจริงทั้งหมด ไม่มีการประมาณการ (ดูหมายเหตุเรื่องไม่มีงานซ่อมหลัง 17 ก.ย. ด้านบน)
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= SECTION 2: MAINTENANCE BY AGE GROUP ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">2</span>Cost Maintenance แบ่งตามกลุ่มอายุรถ</div>
+      </div>
+      <div class="section-desc">ค่าซ่อมรวม ฿532,886 · 47 รายการ · กันยายน 2026 (ยอดเต็มเดือน — ไม่มีงานซ่อมหลัง 17 ก.ย. จริง ดูหมายเหตุในหัวข้อ 1) — สีเข้มขึ้นตามอายุรถที่มากขึ้น</div>
+
+      <div class="card" style="padding:18px 22px 20px;">
+        <div class="bar-row" style="grid-template-columns: 168px 1fr 190px;">
+          <div></div><div></div>
+          <div style="display:flex; justify-content:flex-end; gap:14px; font-size:10.5px; color:var(--muted); font-weight:700; text-transform:uppercase;"><span>ค่าซ่อม</span></div>
+        </div>
+
+        <div class="bar-row" style="grid-template-columns: 168px 1fr 190px;">
+          <div><div class="bar-name">1–5 ปี</div><div class="bar-sub">1 คัน · 0 รายการ</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%; background:#BFE0E8;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿0</div><div class="bar-val-sub">ไม่มีค่าซ่อมเดือนนี้</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 168px 1fr 190px;">
+          <div><div class="bar-name">&gt;5–10 ปี</div><div class="bar-sub">11 คัน · 12 รายการ</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:46.0%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿125,041</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 24.9% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 168px 1fr 190px;">
+          <div><div class="bar-name">&gt;10–15 ปี</div><div class="bar-sub">15 คัน · 20 รายการ</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿271,754</div><div class="bar-val-sub">เฉลี่ย ฿18,117/คัน สูงสุด</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 168px 1fr 190px;">
+          <div><div class="bar-name">&gt;15–20 ปี</div><div class="bar-sub">4 คัน · 6 รายการ</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:20.1%; background:#1F5D6D;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿54,760</div><div class="bar-val-sub">เฉลี่ย ฿13,690/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 168px 1fr 190px;">
+          <div><div class="bar-name">&gt;20 ปี</div><div class="bar-sub">5 คัน · 9 รายการ</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:29.9%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿81,331</div><div class="bar-val-sub">เฉลี่ย ฿16,266/คัน</div></div>
+        </div>
+      </div>
+
+      <details class="insight-box">
+        <summary><span class="ic">💡</span><span class="lbl">Insight: ค่าซ่อมตามอายุรถ</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          ค่าซ่อมลดลงจริงในทุกกลุ่มอายุเมื่อเทียบเดือนก่อน (ยอดเต็มเดือน ไม่มีงานซ่อมหลัง 17 ก.ย. — ดูหมายเหตุในหัวข้อ 1) กลุ่ม <b>&gt;10–15 ปี มีค่าซ่อมรวมสูงสุด</b> (฿271,754 จาก 15 คัน) และมีค่าซ่อมเฉลี่ยต่อคันสูงสุดด้วยที่ ฿18,117/คัน ตามมาด้วยกลุ่ม &gt;20 ปี ที่ ฿16,266/คัน — กลุ่มรถอายุ 1–5 ปี (1 คัน) ไม่มีรายการซ่อมเลยเดือนนี้ ควรพิจารณาแผนซ่อมบำรุงเชิงป้องกันสำหรับกลุ่มรถอายุมากต่อเนื่อง และติดตามว่าการลดลงนี้เป็นแนวโน้มต่อเนื่องในเดือนถัดไปหรือไม่ (เป็น <i>Analytical Flag</i> จากค่าเฉลี่ยกลุ่ม ไม่ใช่เกณฑ์บริษัท)
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= SECTION 3: TRIP & DROP ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">3</span>Trip &amp; Drop แบ่งตามกรุ๊ปรถ</div>
+      </div>
+      <div class="section-desc">นับเฉพาะงานจัดส่ง 1–4 Drop (24,054 จาก 25,635 รายการทั้งหมด ไม่รวมรูปแบบ &quot;Trip 2 Drop&quot; ที่บันทึกคนละมาตรฐาน) · รวม 780 เที่ยว · กันยายน 2026 (ข้อมูลจัดส่งครบเดือนแล้ว)</div>
+
+      <div class="card" style="padding:18px 22px 20px;">
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">Pick Up</div><div class="bar-sub">3 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:30.7%; background:#D6E8F2;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">51 เที่ยว</div><div class="bar-val-sub">4,014 กม. · 17.0 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">4W</div><div class="bar-sub">2 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:28.9%; background:#C2DDEE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">48 เที่ยว</div><div class="bar-val-sub">4,255 กม. · 24.0 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">6W</div><div class="bar-sub">5 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:72.3%; background:#AACFE6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">120 เที่ยว</div><div class="bar-val-sub">13,546 กม. · 24.0 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">6W-H</div><div class="bar-sub">3 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:47.0%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">78 เที่ยว</div><div class="bar-val-sub">9,933 กม. · 26.0 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">10W</div><div class="bar-sub">7 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%; background:#6FA4C7;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">166 เที่ยว</div><div class="bar-val-sub">19,177 กม. · 23.7 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">10W-H</div><div class="bar-sub">6 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:75.3%; background:#4F86AC;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">125 เที่ยว</div><div class="bar-val-sub">15,571 กม. · 20.8 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">12W</div><div class="bar-sub">4 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:45.8%; background:#396C90;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">76 เที่ยว</div><div class="bar-val-sub">10,089 กม. · 19.0 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">TL (เทรลเลอร์)</div><div class="bar-sub">4 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:46.4%; background:var(--ramp-d1);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">77 เที่ยว</div><div class="bar-val-sub">8,085 กม. · 19.2 เที่ยว/คัน</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 200px;">
+          <div><div class="bar-name">TL-H</div><div class="bar-sub">2 คัน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:23.5%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">39 เที่ยว</div><div class="bar-val-sub">5,137 กม. · 19.5 เที่ยว/คัน</div></div>
+        </div>
+      </div>
+
+      <div class="section-desc" style="margin-top:22px; margin-bottom:8px;">จำนวนเที่ยวแยกรายทะเบียนในแต่ละกรุ๊ปรถ (1–4 Drop เท่านั้น) · กันยายน 2026</div>
+      <div class="veh-grid">
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">Pick Up</div><div class="veh-card-total">51 เที่ยว · 3 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">27</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#D6E8F2;"></div></div><div class="mini-label">1ฒล 6201</div></div>
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:89%; background:#D6E8F2;"></div></div><div class="mini-label">1ฒล 6202</div></div>
+            <div class="mini-col"><div class="mini-val">0</div><div class="mini-bar-track"><div class="mini-bar" style="height:2%; background:var(--track);"></div></div><div class="mini-label">ตจ 4786</div><div class="mini-flag">ไม่มีประวัติวิ่งเลย</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">4W</div><div class="veh-card-total">48 เที่ยว · 2 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#C2DDEE;"></div></div><div class="mini-label">1ฒว 1720</div></div>
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#C2DDEE;"></div></div><div class="mini-label">1ฒว 1721</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">6W</div><div class="veh-card-total">120 เที่ยว · 5 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">29</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#AACFE6;"></div></div><div class="mini-label">52-3526</div></div>
+            <div class="mini-col"><div class="mini-val">26</div><div class="mini-bar-track"><div class="mini-bar" style="height:90%; background:#AACFE6;"></div></div><div class="mini-label">96-7670</div></div>
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:86%; background:#AACFE6;"></div></div><div class="mini-label">54-5001</div></div>
+            <div class="mini-col"><div class="mini-val">22</div><div class="mini-bar-track"><div class="mini-bar" style="height:76%; background:#AACFE6;"></div></div><div class="mini-label">91-3191</div></div>
+            <div class="mini-col"><div class="mini-val">18</div><div class="mini-bar-track"><div class="mini-bar" style="height:62%; background:#AACFE6;"></div></div><div class="mini-label">51-1491</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">6W-H</div><div class="veh-card-total">78 เที่ยว · 3 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">28</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#8BBADE;"></div></div><div class="mini-label">97-2833</div></div>
+            <div class="mini-col"><div class="mini-val">26</div><div class="mini-bar-track"><div class="mini-bar" style="height:93%; background:#8BBADE;"></div></div><div class="mini-label">52-4730</div></div>
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:86%; background:#8BBADE;"></div></div><div class="mini-label">52-4158</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">10W</div><div class="veh-card-total">166 เที่ยว · 7 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#6FA4C7;"></div></div><div class="mini-label">50-3173</div></div>
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#6FA4C7;"></div></div><div class="mini-label">99-2172</div></div>
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#6FA4C7;"></div></div><div class="mini-label">99-5750</div></div>
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#6FA4C7;"></div></div><div class="mini-label">99-5751</div></div>
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:96%; background:#6FA4C7;"></div></div><div class="mini-label">50-3172</div></div>
+            <div class="mini-col"><div class="mini-val">22</div><div class="mini-bar-track"><div class="mini-bar" style="height:88%; background:#6FA4C7;"></div></div><div class="mini-label">50-1564</div></div>
+            <div class="mini-col"><div class="mini-val">20</div><div class="mini-bar-track"><div class="mini-bar" style="height:80%; background:#6FA4C7;"></div></div><div class="mini-label">50-3174</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">10W-H</div><div class="veh-card-total">125 เที่ยว · 6 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">26</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#4F86AC;"></div></div><div class="mini-label">51-4448</div></div>
+            <div class="mini-col"><div class="mini-val">26</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#4F86AC;"></div></div><div class="mini-label">99-2173</div></div>
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:96%; background:#4F86AC;"></div></div><div class="mini-label">51-4449</div></div>
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:92%; background:#4F86AC;"></div></div><div class="mini-label">99-2174</div></div>
+            <div class="mini-col"><div class="mini-val">22</div><div class="mini-bar-track"><div class="mini-bar" style="height:85%; background:#4F86AC;"></div></div><div class="mini-label">99-6758</div></div>
+            <div class="mini-col"><div class="mini-val">2</div><div class="mini-bar-track"><div class="mini-bar" style="height:8%; background:#FF6A05;"></div></div><div class="mini-label">51-0416</div><div class="mini-flag">วิ่งน้อยผิดปกติ</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">12W</div><div class="veh-card-total">76 เที่ยว · 4 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">28</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:#396C90;"></div></div><div class="mini-label">55-1697</div><div class="mini-flag" style="color:var(--muted);">เดิม 83-5391</div></div>
+            <div class="mini-col"><div class="mini-val">25</div><div class="mini-bar-track"><div class="mini-bar" style="height:89%; background:#396C90;"></div></div><div class="mini-label">53-4279</div></div>
+            <div class="mini-col"><div class="mini-val">23</div><div class="mini-bar-track"><div class="mini-bar" style="height:82%; background:#396C90;"></div></div><div class="mini-label">53-4278</div></div>
+            <div class="mini-col"><div class="mini-val">0</div><div class="mini-bar-track"><div class="mini-bar" style="height:2%; background:var(--track);"></div></div><div class="mini-label">52-1049</div><div class="mini-flag">ไม่วิ่งงานเลยเดือนนี้</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">TL (เทรลเลอร์)</div><div class="veh-card-total">77 เที่ยว · 4 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">27</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:var(--ramp-d1);"></div></div><div class="mini-label">96-2579</div></div>
+            <div class="mini-col"><div class="mini-val">21</div><div class="mini-bar-track"><div class="mini-bar" style="height:78%; background:var(--ramp-d1);"></div></div><div class="mini-label">92-3556</div></div>
+            <div class="mini-col"><div class="mini-val">18</div><div class="mini-bar-track"><div class="mini-bar" style="height:67%; background:var(--ramp-d1);"></div></div><div class="mini-label">50-4109</div></div>
+            <div class="mini-col"><div class="mini-val">11</div><div class="mini-bar-track"><div class="mini-bar" style="height:41%; background:var(--ramp-d1);"></div></div><div class="mini-label">50-4110</div></div>
+          </div>
+        </div>
+
+        <div class="card veh-card">
+          <div class="veh-card-head"><div class="veh-card-title">TL-H</div><div class="veh-card-total">39 เที่ยว · 2 คัน</div></div>
+          <div class="mini-chart">
+            <div class="mini-col"><div class="mini-val">24</div><div class="mini-bar-track"><div class="mini-bar" style="height:100%; background:var(--ramp-d2);"></div></div><div class="mini-label">51-4447</div></div>
+            <div class="mini-col"><div class="mini-val">15</div><div class="mini-bar-track"><div class="mini-bar" style="height:63%; background:var(--ramp-d2);"></div></div><div class="mini-label">50-4108</div></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="insight-box">
+        <summary><span class="ic">ℹ️</span><span class="lbl">Insight: Trip &amp; Drop ตามกรุ๊ปรถ</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          กลุ่ม <b>10W</b> วิ่งงานมากที่สุด (166 เที่ยว, +1.8% MoM) รองลงมาคือ <b>10W-H</b> (125 เที่ยว, -11.3% MoM) ส่วนอัตราการใช้งานต่อคัน พบว่ากลุ่ม <b>Pick Up ต่ำสุด</b> (17.0 เที่ยว/คัน) — เมื่อดูรายทะเบียนพบ 2 คันที่ควรติดตามเป็นพิเศษ: <b>52-1049 (12W) ไม่วิ่งงานเลยเดือนนี้</b> ทั้งที่คันอื่นในกลุ่มวิ่ง 23–28 เที่ยว และไม่พบรายการค่าซ่อมของคันนี้ในเดือนนี้เลย (ต่างจากเดือนก่อนที่มีรายการซ่อม) จึงยังไม่สามารถระบุสาเหตุที่แน่ชัดได้จากข้อมูลที่มี ควรตรวจสอบสถานะการใช้งานจริง และ <b>51-0416 (10W-H) วิ่งเพียง 2 เที่ยว</b> ทั้งที่คันอื่นในกลุ่มวิ่ง 22–26 เที่ยว มีรายการซ่อมเล็กน้อย (เติมน้ำยาแอร์ ฿500) ซึ่งไม่น่าทำให้วิ่งได้น้อยขนาดนี้ ควรตรวจสอบเพิ่มเติม (ทะเบียน 55-1697 คือคันเดียวกับ 83-5391 เดิม เปลี่ยนทะเบียนราวเดือน ม.ค. 2026 รวมข้อมูลเป็นคันเดียวแล้วทั้งรายงาน) ส่วน <b>ตจ 4786 (Pick Up)</b> ไม่มีประวัติงานจัดส่งในระบบเลยตลอดช่วงข้อมูล 2024–2026 ควรตรวจสอบสถานะการใช้งานจริง
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= SECTION 4: COST / TRIP ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">4</span>Maintenance Cost / Trip แบ่งตามกรุ๊ปรถ</div>
+      </div>
+      <div class="section-desc">ค่าซ่อมเฉลี่ยต่อเที่ยว = ค่าซ่อมรวมของกลุ่ม ÷ จำนวนเที่ยว (1–4 Drop) ของกลุ่ม · เฉลี่ยรวมทั้งฝูงรถ ฿683/เที่ยว (ยอดเต็มเดือน — ดูหมายเหตุในหัวข้อ 1)</div>
+
+      <div class="card" style="padding:18px 22px 20px;">
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">12W</div><div class="bar-sub" style="color:#FF6A05; font-weight:700;">ควรทบทวน</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%; background:#FF6A05;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿1,374</div><div class="bar-val-sub" style="color:#FF6A05;">▲ 38.9% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">TL (เทรลเลอร์)</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:84.8%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿1,165</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 34.8% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">10W-H</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:77.4%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿1,064</div><div class="bar-val-sub" style="color:#FF6A05;">▲ 46.9% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">10W</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:74.7%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿1,026</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 4.4% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">6W-H</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:21.5%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿295</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 61.9% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">6W</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:7.4%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿101</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 66.6% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">4W</div><div class="bar-sub">ฐานข้อมูลน้อย (2 คัน)</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:0.4%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿6</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 99.5% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">Pick Up</div><div class="bar-sub" style="color:#FDC440; font-weight:700; background:none;">ไม่มีค่าซ่อมเดือนนี้</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%; background:#FDC440;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿0</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 100.0% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 128px 1fr 190px;">
+          <div><div class="bar-name">TL-H</div><div class="bar-sub" style="color:#FDC440; font-weight:700; background:none;">ไม่มีค่าซ่อมเดือนนี้</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%; background:#FDC440;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿0</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 100.0% MoM</div></div>
+        </div>
+      </div>
+
+      <details class="insight-box">
+        <summary><span class="ic">💡</span><span class="lbl">Insight: ค่าซ่อมต่อเที่ยวตามกรุ๊ปรถ</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          <b>กลุ่ม 12W มี Cost/Trip สูงสุด ฿1,374/เที่ยว</b> และเพิ่มขึ้น 38.9% MoM (จาก 1 คันคือ 55-1697 ที่มีค่าซ่อมในเดือนนี้ — ดูหัวข้อ 5) ส่วนกลุ่ม <b>Pick Up และ TL-H ไม่มีค่าซ่อมเลยเดือนนี้</b> (6W ต่ำสุดในกลุ่มที่มีค่าซ่อม ที่ ฿101/เที่ยว) — ทุกกลุ่มมี Cost/Trip ลดลงจริง (ยอดเต็มเดือน) ยกเว้น 12W และ 10W-H ที่เพิ่มขึ้น ควรตรวจสอบ 12W เป็นพิเศษในเดือนถัดไปว่าแนวโน้มเพิ่มขึ้นต่อเนื่องหรือไม่ กลุ่มที่มีจำนวนคันน้อย (4W, TL-H) ตัวเลข % เปลี่ยนแปลงอาจผันผวนสูงจากฐานข้อมูลจำกัด ควรตีความอย่างระมัดระวัง
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= SECTION 5: REPAIR COST BY CATEGORY ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">5</span>ค่าซ่อมแยกตามหมวดหมู่ + คันที่ซ่อมบ่อยสุด</div>
+      </div>
+      <div class="section-desc">กันยายน 2026 (ยอดเต็มเดือน — ดูหมายเหตุในหัวข้อ 1) · เรียงตามค่าซ่อมรวมจากมากไปน้อย พร้อมอันดับคันที่มีจำนวนครั้งซ่อมมากที่สุดในแต่ละหมวด</div>
+
+      <div class="card" style="padding:18px 22px 20px;">
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบเครื่องยนต์</div><div class="bar-sub">21 รายการ · 42.5%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿226,474</div><div class="bar-val-sub" style="color:#FF6A05;">▲ 22.9% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ค่ายาง</div><div class="bar-sub">8 รายการ · 19.4%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:45.7%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿103,552</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 30.8% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบช่วงล่าง</div><div class="bar-sub">5 รายการ · 19.0%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:44.6%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿101,060</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 32.3% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบปรับอากาศ</div><div class="bar-sub">7 รายการ · 13.5%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:31.9%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿72,170</div><div class="bar-val-sub" style="color:#FF6A05;">▲ 109.0% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบเบรค</div><div class="bar-sub">1 รายการ · 2.6%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:6.1%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿13,800</div><div class="bar-val-sub" style="color:#FF6A05;">▲ 131.9% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบเฮี้ยบ</div><div class="bar-sub">1 รายการ · 1.7%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:4.0%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿9,000</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 45.5% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบไฟ</div><div class="bar-sub">4 รายการ · 1.3%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:3.0%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿6,830</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 81.7% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">ระบบส่งกำลัง</div><div class="bar-sub">0 รายการ · 0.0%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿0</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 100.0% MoM</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 190px;">
+          <div><div class="bar-name">อื่นๆ อุปกรณ์เกี่ยวกับรถ</div><div class="bar-sub">0 รายการ · 0.0%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:0%; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">฿0</div><div class="bar-val-sub" style="color:#4C8FA6;">▼ 100.0% MoM</div></div>
+        </div>
+      </div>
+
+      <div class="cat-grid">
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ระบบเครื่องยนต์</div></div>
+          <div class="cat-card-total">รวม ฿226,474 · 21 รายการ (แสดง Top 5 จากหลายคัน)</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-5750</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">43.4K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-6758</span></div><div class="hbar-track"><div class="hbar-fill" style="width:95.4%;"></div></div><div class="hbar-val">41.4K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">96-2579</span></div><div class="hbar-track"><div class="hbar-fill" style="width:90.9%;"></div></div><div class="hbar-val">39.5K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">53-4279</span><span class="hbar-count">×2 ครั้ง</span></div><div class="hbar-track"><div class="hbar-fill" style="width:31.5%;"></div></div><div class="hbar-val">13.7K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">92-3556</span><span class="hbar-count">×2 ครั้ง</span></div><div class="hbar-track"><div class="hbar-fill" style="width:13.7%;"></div></div><div class="hbar-val">6.0K</div></div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ค่ายาง</div></div>
+          <div class="cat-card-total">รวม ฿103,552 · 8 รายการ</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-5751</span><span class="hbar-count">×2 ครั้ง</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">65.4K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">50-3174</span></div><div class="hbar-track"><div class="hbar-fill" style="width:27.4%;"></div></div><div class="hbar-val">17.9K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">50-4109</span></div><div class="hbar-track"><div class="hbar-fill" style="width:26.6%;"></div></div><div class="hbar-val">17.4K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-6758</span><span class="hbar-count">×2 ครั้ง</span></div><div class="hbar-track"><div class="hbar-fill" style="width:2.1%;"></div></div><div class="hbar-val">1.4K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">53-4278</span></div><div class="hbar-track"><div class="hbar-fill" style="width:1.5%;"></div></div><div class="hbar-val">1.0K</div></div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ระบบช่วงล่าง</div></div>
+          <div class="cat-card-total">รวม ฿101,060 · 5 รายการ</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">53-4278</span><span class="hbar-count">×2 ครั้ง</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">58.4K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">53-4279</span></div><div class="hbar-track"><div class="hbar-fill" style="width:42.8%;"></div></div><div class="hbar-val">25.0K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-2173</span></div><div class="hbar-track"><div class="hbar-fill" style="width:17.6%;"></div></div><div class="hbar-val">10.3K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">96-2579</span></div><div class="hbar-track"><div class="hbar-fill" style="width:12.6%;"></div></div><div class="hbar-val">7.4K</div></div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ระบบปรับอากาศ</div></div>
+          <div class="cat-card-total">รวม ฿72,170 · 7 รายการ</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-2174</span><span class="hbar-count">×3 ครั้ง</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">39.0K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">51-4448</span></div><div class="hbar-track"><div class="hbar-fill" style="width:75.6%;"></div></div><div class="hbar-val">29.5K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">50-4110</span></div><div class="hbar-track"><div class="hbar-fill" style="width:5.6%;"></div></div><div class="hbar-val">2.2K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">92-3556</span></div><div class="hbar-track"><div class="hbar-fill" style="width:2.4%;"></div></div><div class="hbar-val">0.9K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">51-0416</span></div><div class="hbar-track"><div class="hbar-fill" style="width:1.3%;"></div></div><div class="hbar-val">0.5K</div></div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ระบบเบรค</div></div>
+          <div class="cat-card-total">รวม ฿13,800 · 1 รายการ</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">92-3556</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">13.8K</div></div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ระบบเฮี้ยบ</div></div>
+          <div class="cat-card-total">รวม ฿9,000 · 1 รายการ</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-6758</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">9.0K</div></div>
+          </div>
+        </div>
+
+        <div class="card cat-card">
+          <div class="cat-card-head"><div class="cat-card-title">ระบบไฟ</div></div>
+          <div class="cat-card-total">รวม ฿6,830 · 4 รายการ</div>
+          <div class="hbar-list">
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-2172</span></div><div class="hbar-track"><div class="hbar-fill" style="width:100%;"></div></div><div class="hbar-val">3.8K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">50-4109</span></div><div class="hbar-track"><div class="hbar-fill" style="width:67.9%;"></div></div><div class="hbar-val">2.6K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">1ฒว 1720</span></div><div class="hbar-track"><div class="hbar-fill" style="width:7.1%;"></div></div><div class="hbar-val">0.3K</div></div>
+            <div class="hbar-row"><div class="hbar-plate-wrap"><span class="hbar-plate">99-6758</span></div><div class="hbar-track"><div class="hbar-fill" style="width:4.7%;"></div></div><div class="hbar-val">0.2K</div></div>
+          </div>
+        </div>
+      </div>
+
+      <details class="insight-box">
+        <summary><span class="ic">💡</span><span class="lbl">Insight: ค่าซ่อมแยกตามหมวดหมู่</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          <b>ระบบเครื่องยนต์</b> เป็นหมวดเดียวที่ค่าซ่อมเพิ่มขึ้น (+22.9% MoM, ฿184,235 → ฿226,474) และคิดเป็น 42.5% ของค่าซ่อมทั้งหมดเดือนนี้ กระจายอยู่หลายคัน ไม่กระจุกตัวที่คันใดคันหนึ่งเป็นพิเศษ ส่วน <b>ระบบช่วงล่าง</b> แม้ลดลง 32.3% MoM แต่กระจุกตัวสูงที่ทะเบียน <b>53-4278</b> เพียงคันเดียว (2 ครั้ง ฿58,380 คิดเป็น 57.8% ของหมวด) และ <b>ค่ายาง</b> กระจุกตัวที่ทะเบียน <b>99-5751</b> (2 ครั้ง ฿65,420 คิดเป็น 63.2% ของหมวด) ควรตรวจสอบทั้งสองคันนี้เป็นพิเศษ หมวด <b>ระบบส่งกำลัง</b> และ <b>อื่นๆ อุปกรณ์เกี่ยวกับรถ</b> ไม่มีรายการซ่อมเลยเดือนนี้ (เดือนก่อนมีรวม ฿119,040) — ตัวเลขทั้งหมดเป็นยอดเต็มเดือน (ไม่มีงานซ่อมหลัง 17 ก.ย. จริง ดูหมายเหตุในหัวข้อ 1)
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= SECTION 6: GEOGRAPHIC HEATMAP ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">6</span>Heatmap พื้นที่วิ่งงาน</div>
+      </div>
+      <div class="section-desc">กันยายน 2026 · 780 เที่ยว จาก 26 จังหวัดปลายทาง · แผนที่ใช้ขอบเขตจังหวัดจริง อ้างอิงจังหวัดจากฟิลด์ &quot;สถานที่ส่ง&quot; ในข้อมูล Shipment (ไม่มีพิกัด GPS ระดับจุดในไฟล์ต้นทาง)</div>
+
+      <div class="card" style="padding:20px 22px 18px;">
+        <div class="heatmap-legend">
+          <span><span class="dot" style="background:var(--map-c5); border-radius:3px;"></span>100+ เที่ยว</span>
+          <span><span class="dot" style="background:var(--map-c4); border-radius:3px;"></span>50–99</span>
+          <span><span class="dot" style="background:var(--map-c3); border-radius:3px;"></span>25–49</span>
+          <span><span class="dot" style="background:var(--map-c2); border-radius:3px;"></span>10–24</span>
+          <span><span class="dot" style="background:var(--map-c1); border-radius:3px;"></span>1–9</span>
+          <span><span class="dot" style="background:var(--map-nodata); border:1px solid var(--border); border-radius:3px;"></span>ไม่มีเที่ยว</span>
+          <span style="margin-left:auto; color:var(--muted);">สีเข้ม = เที่ยววิ่งมาก</span>
+        </div>
+
+        <div class="heatmap-flex">
+          <div class="heatmap-mapcol">
+            <svg viewBox="0 0 500 916.1" style="overflow:visible;">
+              <path d="M44.3,41.5L45.8,41.3L51.5,44.7L53.4,48.3L57.6,46.7L65.6,46.8L67.9,45.7L68.1,48.3L72.2,51.7L73.8,57.6L75.7,59.5L74.8,65.6L75.9,71.7L74.5,76.5L78.5,83.1L77.7,85.7L76,86.8L72.4,87.8L68.4,87L66.8,88.9L64.4,87.7L59.3,87.2L54.8,81.4L51.6,79.2L48.6,80.1L48,82.6L46.2,84.2L47,86.2L45.6,89.5L46.4,94.2L44.1,99.8L44.8,102.8L46.4,103.9L45.1,111.5L46.2,114.2L45.9,117.5L48.6,121.2L51.7,123.3L49.4,123.9L48.1,126.9L45.1,129.6L46.3,132.1L44.6,136.8L45.6,138.4L45.4,141.8L46.7,145.6L44.8,147.2L44.1,150.3L45.2,153.2L53.3,160.7L53.6,162.3L51.8,164.9L53.1,168L57.3,170L53.7,170.8L50.7,173.2L46.2,173.2L37.8,177.5L33.5,178.7L24.6,170.3L24,167.3L19.6,161.7L20.9,161.5L20.5,157.6L24.3,153.1L22.2,147.9L20.7,147.4L20.1,142.2L16.1,136.2L17.6,134.3L17.2,132.3L13.4,130.6L10.7,134.8L8.1,133.1L6.1,130.6L5.5,126.3L0,117.1L2.3,117.7L4.6,120.9L9.5,120.8L17.2,116.6L23.8,115.9L24.6,112.7L22.4,98.5L18.5,93.9L21.2,91.6L22.7,87.1L27.7,82.4L27.8,76.5L24.9,72.9L26.9,72L27.4,70.7L25,64.8L29.6,59.7L30,54.3L39.6,49.8L39.4,44.6L40.6,39.7L41.8,39.4L44.3,41.5Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M115.7,586.7L124.1,586.8L127.1,584.7L129.6,584.2L129.2,587.5L130.4,591.4L130.1,592.3L129.1,591.6L126,592.1L125.5,596.3L121.9,601.9L121.9,603.8L119,604.9L117.5,606.9L116.1,612.1L114.1,612.8L113.9,614.1L115.5,614.5L113.8,617.6L116.7,620.4L116.5,623.4L113.4,624.6L111.4,622.5L108.5,623.8L109.5,628.1L112.8,631.5L114.7,631.4L113.9,632.6L111.4,632.9L108.5,639.5L110.1,644.3L108.9,646.5L109.7,655.2L108.1,658.8L105.2,659.2L101.2,662.5L93.4,662.6L86.7,665.3L84.2,670.6L79,667L77.4,661.1L77.7,659.1L81.1,656.4L85.5,649.7L88.3,649.4L90.6,646.3L93.5,644.8L95.6,639.2L92.9,633.1L94.4,629.7L94.2,627.9L96.5,624.1L95.7,621.8L93.5,619.9L93.5,617.3L97.3,612.7L96.6,611L97.9,608.6L95.7,604.5L93.6,603L94.6,599.5L92,597.2L93.6,595.5L95.3,595.9L97.8,594.9L98.7,592.7L98.5,587.8L99.7,586.6L102.6,587.4L103.9,584.3L107.8,581.6L108.6,583.8L115.7,586.7Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M180.2,773.4L168.9,777.3L167.4,781.8L162.2,780.4L159.7,776.7L157.1,775.5L148.4,776.7L144.2,778.8L143.4,775.6L144.4,771L143.4,770.1L136,770.7L131.8,777.1L130.1,777.5L127.3,776.4L123.5,776.4L118.9,772.2L120.1,769.7L116.6,763.6L116.9,760L118.4,757.1L118.4,751.5L113.8,746L116.5,740.2L116.3,736.3L119.1,737.4L126.3,732.4L126.5,730L128.8,728.3L129.2,726.2L130.8,724.4L131.2,717.2L133,716.5L134.9,712.9L136.9,713.6L141.1,711.9L141,710L143.3,709.2L144.4,704.3L146.6,704.2L146.4,700.6L144.4,700L143.4,698.5L144.8,693.7L144.6,690.2L145.8,688.4L147.7,687.8L150.7,689.5L151.1,691.8L152.2,693.7L152.7,693.3L152.7,698L154.5,701.4L155.5,707.7L154.7,709L155.1,716.2L157.6,732.1L162,735.8L165.8,743.7L168.3,745.5L170.8,745L169.5,738.6L167.5,737.8L168.6,737.2L172.1,740.5L175.9,750L180.2,773.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M64.3,775.5L65.1,774.7L65.6,776.6L63.2,777.9L63.1,781L59.8,779.9L58.5,783.7L56.3,782.5L55.2,776.4L56.3,775.5L54.4,774L55.6,772.4L55.1,771.2L56,769.4L55.6,765.3L56.6,761.5L56,757.7L59,759L59.8,762.8L60.8,762.2L63.5,764.5L65.1,763.6L65.5,765.5L63,772.4L64.3,775.5Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M69.8,695L68.5,700L69,703L68.1,703.8L69.6,709.1L66.7,710.4L66.5,714.3L69.3,715.3L73.6,720.1L75.4,720.4L75.4,725.6L73.6,728L72,728.6L72.2,729.3L74.3,730.9L79,729.7L82,730.9L82,732.5L81.1,734.5L79,735.2L79.9,741.6L79.2,746L78.2,746.8L78.6,746.1L75.4,745L75.2,746.4L70.8,748.8L68.8,748.3L68.4,749.5L67.2,748.8L67.2,749.6L64.9,750L64.5,750.6L66.4,751.4L67,756.2L64.7,760.4L63.5,759.4L62.6,761.1L60.6,758.1L56,755.6L55.8,752L51,735.2L51.7,733.6L54,737.8L54.3,736.5L52.3,734.4L53.6,729.3L52.3,724.7L54.2,722.6L54.8,717L56.7,712.4L58.6,709.3L61,709.3L60.6,708L62.6,705.6L59.1,706.1L58.9,704.5L62.1,703.3L58.9,697.6L58.5,694.8L59.5,695.4L61.4,693.7L60.3,692.2L62.5,686.4L64.8,685.6L67.7,688.2L70.9,689.3L71.3,692.6L69.8,695Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M93.8,603.4L95.7,604.5L97.9,608.6L96.6,611L97.3,612.7L93.5,617.3L93.5,619.9L95.7,621.8L96.5,624.1L94.2,627.9L94.4,629.7L92.9,633.1L95.6,638.1L95.1,641.6L93.5,644.8L90.6,646.3L88.3,649.4L85.5,649.7L83.1,652.5L82.5,654.7L77.4,660.1L79,667L82.9,669L85.8,673.9L80.1,679L80,681.6L78.6,681.6L78.7,683.9L79.9,684.3L79.4,685.8L75.8,686.4L74.7,685.2L71.3,686.5L69.9,688.8L67.7,688.2L64.8,685.6L62.5,686.4L66.6,673.8L68.4,675.1L71.1,672.7L68.8,672.1L67,670.4L70,667.2L68.8,665.3L70,664.8L68.8,663.6L71.8,664L73.2,661.8L70.5,661.1L69.7,662L69.7,659.8L72.5,658.4L74.2,655.6L72.1,657.7L70,656L70.4,654.9L72.1,653.1L73.8,653.5L74.6,651.7L73.6,650.8L75.2,649.1L77.1,648.8L76.6,647.9L75.8,648.4L75.4,646.3L79,640.6L82.5,631.8L86.7,615L85.9,609.8L84.1,607.4L84.7,604.7L87.9,599.7L91.4,598.3L92,597.2L94.7,599.7L93.8,603.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M108,659L109.7,666.6L112.1,670.8L112.8,674.2L118.8,683.5L116.8,683.6L113.5,686.9L113.4,690.5L114.7,693.4L120.4,694.2L122.1,695.8L127.9,695.3L131.6,690.3L135.1,690.7L140.9,688.2L144.7,688L145.8,688.4L144.6,690.2L144.8,693.7L143.4,698.5L144.4,700L146.4,700.6L146.7,704L145.7,704.8L144.4,704.3L143.3,709.2L141,710L141.1,711.9L136.9,713.6L134.9,712.9L133,716.5L131.2,717.2L130.8,724.4L129.2,726.2L128.8,728.3L126.5,730L126.3,732.4L119.1,737.4L116.5,736L116.5,740.2L113.8,745.6L115.3,748.5L111.5,749.7L103,747.8L99.4,750.1L94.1,750.2L92.7,744L93.8,740.4L92.4,737.6L95,734.9L94.4,733.4L90.4,730L87.4,729.7L85.5,727.9L84.3,728.2L82.7,730.9L79,729.7L74.3,730.9L72.2,729.3L72,728.6L73.6,728L75.4,725.6L75.5,720.7L73.6,720.1L69.3,715.3L66.7,714.7L66.4,711.2L69.6,709.1L68.1,703.8L69,703L68.5,700L69.8,694.8L71.3,692.6L71.2,690.1L69.9,688.8L72.1,686L74.7,685.2L75.8,686.4L79.6,685.6L79.9,684.3L78.7,683.9L78.6,681.6L80,681.6L80.1,679L85.7,674.2L84.2,670.6L86.4,665.5L93.4,662.6L101.2,662.5L105.2,659.2L108,659Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M94.1,750.2L99.4,750.1L104.3,747.8L109.9,749.6L115.3,748.5L118.4,751.5L118.4,757.1L116.9,760L116.6,763.6L120.1,769.7L118.9,772.2L120.1,774.9L117,779.2L119.9,785.2L118.1,788.5L115,790.9L108.5,786.2L107.2,784L106.1,787.8L104.8,788.6L102.7,788.2L101.3,786.7L100.2,781L103.1,778.3L103.5,774.2L101,775.5L99.3,773.1L97.4,772.3L96.9,769.2L94.4,766.4L89.9,769.4L87.3,766.3L85.5,768.1L84.1,765.4L83.9,756.3L82.9,753.9L81.6,755.6L81.4,751.1L81,750.5L76.7,752.2L76.8,748.2L79.2,746L79.9,741.6L79,735.2L81.3,734.3L82,730.9L83.3,730.6L84.8,727.9L87.4,729.7L90.4,730L95,734.7L92.4,737.6L93.8,740.4L92.7,744L94.1,750.2Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M167.4,781.8L171.7,783.7L168.3,786.9L168.2,788.1L170.7,799.6L173.3,802.1L176.4,809L177.8,810.2L181.9,810.8L182.4,812.3L180.2,815.9L177.5,817L176.4,818.7L168.9,820.3L163.9,823L161.4,825.7L157.5,820.5L155.9,816.1L156.1,813.1L152.6,807.7L150.8,801.4L149.2,799.5L149.1,797.2L147.3,794.1L147.3,792.1L148.8,789.8L147.3,788L144.2,778.8L148.4,776.7L157.1,775.5L159.7,776.7L162.2,780.4L167.4,781.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M139.5,862.5L135.5,857.2L138.9,848.5L141.8,858.7L139.5,862.5Z M148.9,823.5L149.8,825.6L152.5,827.2L154.5,823.4L155.6,823.1L158.9,827.1L160.3,827.9L162.4,827.5L163.5,828.6L163.8,831.5L166.9,835.8L171,837.1L172.4,838.5L171.3,843.6L171.8,849.4L170,849.8L169.4,851L169.6,858.2L168.3,859.9L168.3,863.6L167.2,865.9L166.1,863.6L165,863.3L165.8,860.3L164.4,860.1L163.4,861.9L159.6,858.2L159,856.3L157.4,856.5L158,854.7L157.2,852.4L155.8,852.1L151.6,846.1L150.6,845.2L149,845.7L147.7,842.7L140.6,839L140.9,835.4L142.3,835L140.3,833L140.2,829.8L141.2,827.7L144.2,823.4L148.7,822.5L148.9,823.5Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M183.8,818.8L185.9,821.5L190.9,823L194.6,821L194.8,817.5L206.8,833.4L209.4,834.4L210.8,833.8L219.7,840.3L223.9,840.2L222.3,843.9L222.1,847.9L223.7,853L225.9,853.8L226,857.1L221.6,863.8L215.7,865.8L214.1,873.9L209.2,874.8L208.1,867.6L207.5,866.4L203.8,865L203.5,862.8L197.6,865.7L187.7,861.5L182.9,861L179.4,858.8L176.1,850.2L174.2,849.9L173.3,850.7L171.6,850L172.2,847.2L171.3,843.6L172.4,838.5L171,837.1L166.9,835.8L163.8,831.5L163.5,828.6L161.4,825.7L163.9,823L168.9,820.3L176.4,818.7L177.5,817L180.2,815.9L182.3,812.3L182.8,814.9L185.3,816.2L183.2,817.6L183.8,818.8Z M181.7,780.4L186.1,801.9L194.1,819.4L192.6,819.2L188,815.4L185.2,814.9L186,813.2L185,808.5L184.1,808L184,798.8L183,796.4L179.2,795.9L177,799.4L175.8,798.2L176.2,795.7L179.1,793.3L179.3,790.9L177,782.7L174.7,782.4L171.7,783.7L167.4,781.8L168.9,777.3L179.9,773.4L181.7,780.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M143.8,770.4L144.4,771.6L143.7,778L147.3,788L148.8,789.8L147.3,792.1L147.4,794.5L150.8,801.4L152.6,807.7L156.1,813.1L155.9,816.1L157.5,820.5L162.4,827.5L160.3,827.9L158.9,827.1L155.2,822.9L152.5,827.2L149.8,825.6L148.7,822.5L145.7,823.5L143.9,822.9L141.1,824.2L140.1,823.8L139.8,820.9L136.3,823L136.1,822.1L134.5,821.7L131.9,816.3L134.6,812.4L135.7,808.1L132.4,812.7L130.9,812.2L131,808.5L129.9,807.6L128.7,810.7L129,812.9L127.7,814.1L122.1,811.6L119.6,807.7L120.2,805.2L119.2,800.3L117.1,800L117.9,798.7L117,793L115.5,793.3L114.2,792.2L119.8,785.6L117,779.2L119.9,775.4L119.7,773.1L123.5,776.4L127.3,776.4L130.1,777.5L131.8,777.1L136,770.7L143.8,770.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M240.4,859.3L247.4,858.1L251,856.4L253.4,859.5L256.1,858.9L256.8,859.8L252.1,865.9L246.1,867.6L244.1,879.3L242.8,880.9L243.9,883.6L245.8,884.8L247,888L249.1,890L249.9,899.9L234.8,906.4L232.6,912.9L227.2,916.1L223.4,911.2L219.7,910L217.7,906.1L220.7,899.5L224.1,898.2L224.6,897.1L225.5,887.9L223,884.9L223,883.5L225.2,881.6L225.1,878.8L224,877.7L220.2,878L218.3,876.4L214.4,878.7L211.1,877.9L209.7,878.6L209.2,874.8L212.1,874.8L214.5,873.6L215.3,866.4L218.3,864.5L221.6,863.8L226,857.1L225.9,853.8L229,856L232.9,856.4L235.6,854.6L237.8,851.5L238.2,856.6L240.4,859.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M159.4,3.8L161.7,4.4L165.5,7.9L165.8,11.2L168.8,12.7L169.7,11.8L169.6,9.4L172.2,8.2L174,4.5L178,2.8L180.3,3.4L187.3,15.7L191.4,18.3L192.5,17.1L192.3,23.4L188.7,34.9L185.6,37.5L182.7,42.1L183.1,44.6L180.4,47.5L170.5,51.6L167.8,60.1L164.9,61.3L164.5,62.8L160.1,62.7L156,65.6L154.3,64.7L154.9,60.5L154.1,59.5L144.3,61.2L140.7,62.8L138,58.4L136.4,58.1L133.8,63.2L134.3,70.9L132,79.4L133.2,80L133.3,81.3L131.5,84.9L129.4,85.1L125.5,89.1L123.4,89.5L122.5,85.9L118.9,81.7L118,78.3L119.9,73.4L118.3,61L117.1,58.6L118.8,55.8L117.1,52.5L115.9,52.1L115.1,49.5L118.3,46.1L120.2,45.5L122.5,39.8L124.5,38.8L122.6,34.1L124.6,30.2L126.6,29L129.6,29.2L131.1,30L132.6,32.7L134.3,30.2L134.9,27L129.7,23.7L129.7,22.5L133.4,20.1L130,18.1L131,15.4L128.6,12.3L127.4,7.6L124.7,4.3L125.8,3.9L129.6,6.2L138.6,8.5L146.7,6.9L149.8,1.7L152.2,0.6L156.1,0.1L159.4,3.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M132.6,32.7L131.1,30L129.6,29.2L126.6,29L124.8,30L122.6,34.1L124.5,38.8L122.5,39.8L120.2,45.5L118.3,46.1L115.1,49.5L115.9,52.1L117.1,52.5L118.8,55.8L117.1,58.6L118.3,61L119.9,73.4L118,78.3L118.9,81.7L122.5,85.9L123.4,89.5L121.7,90.9L121.5,95.7L118.8,98.2L120.1,98.3L121.3,103L119.3,108.8L119.8,110.7L118.8,111.9L120.5,113.3L120.4,114.9L118.7,118.1L117.1,117.8L112.4,114.5L113.1,112.2L110.5,109L110.5,107.8L107.5,107.8L102,110.8L100,109.9L94.9,118.5L85.8,123.8L81.2,125.1L81.8,126.4L80.7,128.5L81.7,130.3L80.1,132.6L86.9,136.5L88.3,142.3L87.5,151.2L88.2,153.1L90.7,153.5L93.9,161.9L93.2,166.9L89.9,168.8L84.3,166.2L81.9,166.3L78.4,168L78.2,169.9L75.8,172.1L76.7,176.3L76,177.6L72.5,178.7L71.3,181.2L71.3,184.5L73.2,186.9L72.2,190.8L73.5,191.8L73.3,194.9L63.8,197.5L59.2,194L59.5,191.9L58,188.5L59.3,186.8L58,185.6L58.5,180.7L57.4,177.8L54.7,177.1L54.8,172.9L57.3,170L53.1,168L51.8,164.9L53.6,162.3L53.3,160.7L45.2,153.2L44.1,150.3L44.8,147.2L46.7,145.6L45.4,141.8L45.6,138.4L44.6,136.8L46.3,132.1L45.1,129.6L48.1,126.9L49.4,123.9L51.7,123.3L48.6,121.2L45.9,117.5L46.2,114.2L45.1,111.5L46.4,103.9L44.8,102.8L44.1,99.8L46.4,94.2L45.6,89.5L47,86.2L46.2,84.2L48,82.6L48.6,80.1L51.6,79.2L53.7,80.3L60,87.5L64.4,87.7L66.8,88.9L68,87.1L72.4,87.8L77.7,85.7L78.3,81.7L74.5,76.5L75.9,71.7L74.8,65.6L75.7,59.5L73.8,57.6L72.2,51.7L68.1,48.3L67.9,45.7L71.2,47.6L77.7,43.3L84.2,42.1L87.7,39.5L91.2,41.5L92.3,43.3L97.7,40.6L99.8,37L99.3,33.2L100.3,25L103.7,21.3L110,20L117.1,23.7L125.9,21.2L130,18.1L133.4,20.1L129.7,22.5L129.7,23.7L134.9,27L134.3,30.2L132.6,32.7Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M140.7,62.8L142.1,69.4L142.2,75.6L146.4,85.3L148.9,86.2L150.2,89.4L155.8,90.4L157.4,93.1L163.2,96.9L164,100.2L166.8,101L167.4,103.1L166.1,105.8L166.2,112.3L167.1,113.9L166.5,116.2L163.5,116.9L162.7,120.9L159.8,126.2L157.7,127.4L153.8,133.6L151.4,134.3L148.3,137.6L142.9,146.8L138.1,149.8L135.3,149.3L134.7,151.2L130.4,154.8L121.9,164.9L118.1,165.6L118.3,167.8L121.2,171.2L126.2,169.6L127.8,168L128.2,168.9L126.7,175.7L124.7,176.3L125.8,180.2L124.6,181.5L124.3,184.7L125.8,186.4L125.4,188.8L128,190.7L128.3,192.2L126.8,194.6L126,198.9L122.9,200.4L120.3,197.3L118.4,196.9L116.2,193.4L115.2,188.4L112.8,188.3L109.4,192.3L103.2,190.1L100.3,187.8L101.3,181.5L100,175.3L102.6,174.7L103.1,170.8L106.7,165.3L105.8,163.1L109.4,162.7L108.9,161L110.2,160.3L107.5,157L106.1,156.6L104.9,154L105,151.5L103.1,147.7L102.8,142.8L100.2,136.2L102.7,134.6L105.5,134.5L106.4,132.5L108,131.7L113.8,121.5L118.1,120.2L120.6,114.1L118.8,111.9L121.3,104.4L120.2,98.6L118.9,98.3L119,97.5L121.7,95.3L122,90.3L125.5,89.1L129.4,85.1L131.5,84.9L133.3,81.3L133.2,80L132,79.4L134.3,70.9L133.7,64.2L134.8,60.2L137.3,57.9L140.7,62.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M118.3,118.4L117.5,120.7L113.8,121.5L108,131.7L106.4,132.5L105.5,134.5L102.7,134.6L100.2,136.2L102.8,142.8L103.1,147.7L105,151.5L104.9,154L106.1,156.6L110.1,159.9L108.9,161L109.4,162.7L105.8,163.1L106.7,165.3L104.3,168.1L102.3,175L100,175.3L97.3,173.4L94.6,173.3L92.8,175L91.2,180.1L88.6,182.1L82.5,183L81.2,172.7L83.5,171.4L84,169.9L81.9,166.3L85.3,166.5L89.6,168.8L92.1,168L93.2,166.9L93.9,161.9L90.7,153.5L87.8,152.4L88.3,142.3L86.9,136.5L80.1,132.6L81.7,130.3L80.7,128.5L81.8,126.4L81.2,125.1L85.8,123.8L94.9,118.5L100,109.9L102,110.8L107.9,107.7L110.5,107.8L110.5,109L113.1,112.2L112.4,114.5L118.3,118.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M212.9,51.5L220,51.6L225.6,54.3L232.3,52.9L234.2,53.6L235.2,55.5L235,58.8L234.2,60.2L231.4,61.4L230.2,66.1L230.6,67.9L232.5,69.2L233.6,80.5L239,86.3L239.5,88.1L236.9,90.5L233.4,97.1L233.6,102L232.2,106L234.3,109.5L233.2,111.5L229.5,114.1L229.2,116.8L224.3,119.9L221.6,124.7L224.3,128.2L215,135.7L214.4,138.6L212.6,140.2L213.3,141.8L211.6,143L210.1,146L205.4,149.6L201.1,149.6L194.3,148L190.6,150.1L185.5,150.5L184,143.1L187.1,141.1L190,133.8L189.5,130.2L190.8,128.8L192.2,123.4L191.7,121.9L188.8,120.6L184.3,120.7L182.8,115.3L184,112.1L181.7,110.1L183.5,105.5L182.1,104.8L180.5,101.7L184.8,93.3L189.7,91.3L189.4,89.9L187.4,89.7L188.4,86.2L193.9,87.6L192.8,85.6L193.5,83.8L197.7,81L195.4,73.9L196.2,69.3L194.1,67.8L191.5,67.9L190.4,65.3L195.1,59.9L194.2,57.9L196.1,55.9L202.6,57.7L204.9,59.5L211.7,51.8L212.9,51.5Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M192.7,58.8L194.2,57.9L195.2,59.7L190.8,64.4L190.5,66.2L191.8,68.1L194.1,67.8L196.2,69.3L195.4,73.9L197.7,81L193.5,83.8L192.8,85.6L193.9,87.6L188.4,86.2L187.4,89.7L189.4,89.9L189.7,91.3L184.8,93.3L180.8,100.8L169.4,99.8L166.8,101L164.4,100.4L163.2,96.9L157.4,93.1L155.8,90.4L150.2,89.4L148.9,86.2L146.4,85.3L142.2,75.6L142.1,69.4L140.7,62.8L144.3,61.2L154.1,59.5L154.9,60.5L154.3,64.7L155.5,65.5L157.1,65.3L160.1,62.7L164.5,62.8L164.9,61.3L167.8,60.1L170.8,51.3L179.9,47.9L183.1,44.6L184.8,50.1L187,53.2L187.4,56.1L192.7,58.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M172.5,100.6L180.8,100.8L182.1,104.8L183.5,105.5L181.7,110.1L184,112.1L182.8,115.3L184.3,120.7L188.8,120.6L191.7,121.9L192.2,123.4L190.8,128.8L189.5,130.2L190,133.8L187.1,141.1L184,143.1L185,150.2L181.6,152.5L180.6,157L179.8,157.7L176.9,153.7L174.4,154.1L167.4,160L159.6,161.7L156.6,164.7L154.4,163.3L148.1,163.8L146.2,164.9L143.7,168.4L139.2,163.7L135.5,162.5L133.1,162.9L131.2,163.9L126.2,169.6L122.2,171.2L120.6,170.9L118.3,167.8L118.1,165.6L121.9,164.9L130.4,154.8L134.7,151.2L135.3,149.3L138.1,149.8L142.9,146.8L148.3,137.6L151.4,134.3L153.8,133.6L157.7,127.4L159.8,126.2L162.7,120.9L163.5,116.9L166.5,116.2L167.1,113.9L166.2,112.3L166.1,105.8L167.4,103.1L166.8,101L169.4,99.8L172.5,100.6Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M214.4,170.5L217.1,169.3L215.8,172.6L212.9,176.2L212.9,177.6L216.1,178.7L212.7,184.2L213.9,186.2L214.1,192.2L219.3,192.9L221.9,196L223.8,196.4L225.4,199L221.3,213L222.2,214.8L221.5,216.4L223.8,218.8L221.9,218.9L215.6,225.2L213.5,226.1L215.4,232.3L211.1,235.1L210,238.1L210.4,241.1L207.4,246.7L202.1,249.2L199.8,253.4L194.6,248.4L193.4,243.9L191.6,241.6L184.9,241.6L176.9,243.3L176.4,241.5L175.4,241.6L174.9,238.8L173.7,238.2L169.9,239.8L166.3,243.2L161.5,244.2L159.6,240.5L154.8,238.8L153.6,237L153.8,232.3L155.9,230.6L153.1,229.5L152.8,228.4L154.7,226.5L156.9,221.4L160.9,221.9L161.6,219.8L167.2,219.2L167.5,215.5L157.3,207.9L155.2,205.5L154.5,203L157.9,203.1L160.2,202.1L161.7,202.9L169.5,200.6L171.6,201L175.1,198.3L174.7,192.9L177.7,190.1L179.8,190.2L187,187.2L190.2,188.2L194.6,187L196.3,184.7L204.7,178.5L211.8,169.7L213.1,169.3L214.4,170.5Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M143.7,168.4L146.6,164.5L153.3,163.3L157.7,169.4L157.7,174.9L155.3,177.5L160.8,183.7L161.7,185.9L159.6,187.7L160.6,192.4L157.8,197.3L158.5,202.8L154.4,203.5L157.3,207.9L167.5,215.5L166.7,219.5L161.6,219.8L160.9,221.9L156.9,221.4L154.7,226.5L152.8,228.4L153.1,229.5L155.9,230.6L153.8,232.3L150.6,229.3L141.1,229.6L132.8,224.5L130.8,220.5L121.9,221.1L116.1,217.4L115.6,216L116.1,209.7L118.8,205.5L118.4,196.9L120.3,197.3L122,200L123.2,200.3L126,198.9L126.8,194.6L128.1,193.1L128.1,190.9L125.4,188.8L125.8,186.4L124.3,184.7L124.5,181.8L125.8,180.2L124.7,176.3L126.7,175.7L126.6,173.5L128,171.4L127.8,168L131.2,163.9L135.5,162.5L139.2,163.7L143.7,168.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M217.1,169.3L214.4,170.5L213.1,169.3L211.8,169.7L204.7,178.5L196.3,184.7L194.6,187L190.2,188.2L187,187.2L179.8,190.2L177.7,190.1L174.7,192.9L175.1,198.3L171.6,201L169.5,200.6L161.7,202.9L160.2,202.1L158.5,202.8L157.8,197.3L160.6,192.4L159.6,187.7L161.7,185.9L160.8,183.7L155.4,177.8L157.6,175.2L158.2,171.3L157.7,169.4L154.9,166.5L154.9,164.7L153.3,163.3L157.2,164.5L159.4,161.8L167.4,160L174.1,154.2L176,153.7L177.4,154.2L179.8,157.7L181.3,155.5L181.8,152.2L185,150.2L190.6,150.1L194.3,148L201.1,149.6L205.4,149.6L210.1,146L211.6,143L213.3,141.8L212.6,140.2L214.4,138.6L215,135.7L224.3,128.2L229.2,131.2L227.6,133.2L227.5,136L229.6,139.1L228.3,143.5L229.8,147.9L226.6,150.5L223.8,155.3L219.9,158.3L219.5,162.5L217.8,163.3L218.3,165.1L217.3,165.8L217.1,169.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M76.4,297.4L79.1,298.5L83.1,304.8L82.6,306L85,307.6L92.9,319.7L98.1,323.1L99.2,331.7L103.7,335.9L107.4,335.3L113.6,337.1L116.2,336.7L118,342.1L116.3,345L116.6,346.4L118.8,347L122.4,351.2L125.7,351.2L125.5,353.6L127.1,355.9L129.4,355.4L131.1,353.7L132.1,349.3L135.7,350L139,348.9L146.7,356.7L151.6,359.1L150.3,361.1L153,363.8L149,366.5L148.8,383.2L148.1,385.5L145.4,388.7L145.9,392.4L147.7,393.4L148.3,397.1L152.3,402L147.3,410L140.6,409.5L134.3,411.5L131.7,413.7L127.8,411L120.7,413.9L114.3,413L111.6,415.2L108.2,415.6L105.4,412.2L104.7,406.6L99.7,401.7L96.5,396.8L95.4,393.3L91.6,391.6L84.5,386.2L81.7,381.9L79.5,382L74.8,378.7L72.1,375.2L67.9,366.6L66.4,365.9L64.3,361L57,353.9L53.7,348.8L52.4,341.6L50.6,337.4L51.1,333.5L48.7,330.1L50.6,325.6L49.7,323.1L53.1,322.7L56.9,318.6L62.7,320.7L62.9,319.4L61.8,318.4L63.1,316.8L63,314.7L67.7,313L70.1,314.2L71.2,316.6L72.8,314.7L73.4,311.8L71.9,295L76.4,297.4Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M122.6,221.3L130.5,220.4L132,221.6L132.8,224.5L141.1,229.6L150.9,229.4L153.8,232.3L153.1,235.8L154.6,238.6L159.1,240.2L161,242.2L161.5,244.2L158.2,252.5L159.2,254L156.2,257.7L156.2,260.3L153.3,267.5L153.2,269.9L147.7,275.6L143.3,285.5L139.7,288.2L137.9,286.5L136.3,282.2L131.8,280L128.3,280.1L127.3,281.3L120.5,280.1L115.9,281.8L111.6,278.9L108.9,279.4L104.1,283L103.5,275.1L100.9,273L99.9,267.3L100.8,262.8L99.6,261.3L99.1,258.2L100.2,250.8L98.6,247.4L98.8,245.9L99.5,245.2L106.2,245.5L110.1,242.3L114,241.2L114.7,239.6L114.3,234.5L117.2,230.1L117.3,226.3L119,224.6L119.4,221.4L120.2,220L122.6,221.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M175.4,241.6L176.4,241.5L176.9,243.3L184.9,241.6L191.6,241.6L192.6,242.3L194.6,248.4L199.8,253.4L201.6,258.7L197.8,265.7L197.5,271.5L201.8,272.8L206,275.7L205.1,279.2L195.9,277.8L190.1,279.5L184.3,279.6L178.3,278.3L177.5,280.2L175.7,280.5L169.7,277.5L165.1,267.8L165.1,266.1L162.3,264L160.9,255.8L158.2,252.5L161.5,244.2L166.3,243.2L169.9,239.8L173.7,238.2L174.9,238.8L175.4,241.6Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M239.1,209L247.5,208.3L251.2,210.2L252.4,213L254,213.5L256.1,212.8L258.5,210.2L262.8,218L263.3,227.5L267.4,227.5L266.4,231.6L263.9,234.3L261.1,232.4L257.7,232.6L256.1,231.3L253.1,233.4L250.6,233.1L251,235.6L249.7,238.9L250.7,241L247.8,243L247.8,245.5L242.6,252.8L240.8,258.7L241.9,260.1L240.5,262.4L239.3,270.7L240.2,275.7L243,277.4L241.6,281.8L239.5,284.7L239.7,290.5L243.7,293.5L241.8,302.2L242.3,311.1L239.9,316L237.9,318L235.6,316.2L233.8,312.1L227.2,312.1L225.1,310.4L222.6,310.2L218.4,306.9L212.1,307.9L204.1,305.9L207.1,303.1L209.7,298L209,296.1L209.6,294.3L207.5,287L207.7,283.4L205.2,281L206,275.7L201.8,272.8L197.5,271.3L198,265.1L201.6,259.3L199.8,253.4L202.1,249.2L207.4,246.7L210.4,241.1L210,238.1L211.1,235.1L215.4,232.3L213.4,227.3L213.9,225.5L215.6,225.2L221.9,218.9L225.7,218.7L227.2,217.4L227.4,211.1L229.9,210.4L231.6,206.2L234,206.4L239.1,209Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M136.4,340.2L137.5,340L137.1,337.6L138.6,337.1L151.8,341.5L157.5,342.3L161.9,341L162.3,339L166.6,340L168,341.4L172.3,339.5L171.2,341.5L171.9,342.5L173,342.3L172.3,347.5L173.6,349.7L172.2,351.9L173.1,358.1L171.9,360.7L172.6,362L171.4,363.7L172.6,366.9L174.9,368.5L175.1,371.1L176.6,373.6L174.9,384.5L172.9,387.6L168.7,389.9L158.7,389.5L151.3,394.7L148.2,394.7L145.9,392.4L145.4,388.3L148.1,385.5L148.9,382.4L149,366.5L153,363.8L150.3,361.1L151.6,359.1L146.7,356.7L139,348.9L135.7,350L132.1,349.3L131.1,353.7L129.4,355.4L127.1,355.9L125.5,353.6L125.7,351.2L122.4,351.2L118.8,347L116.9,346.9L116.3,345.2L118,342.1L116.1,336.9L117.1,333.5L118.8,332.2L123.9,334.6L124.5,336.7L136.4,340.2Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M84,183.2L88.6,182.1L91.2,180.1L93.7,173.7L98.1,173.7L100,175.3L101,179L100.3,187.8L103.2,190.1L109.4,192.3L112.8,188.3L115.2,188.4L116.2,193.4L118.4,196.9L118.8,205.5L116.1,209.7L115.6,216L116.1,217.4L120.2,220L119,224.6L117.3,226.3L117.2,230.1L114.3,234.5L114.7,239.6L113.1,241.9L110.1,242.3L106.2,245.5L99.5,245.2L98.6,246.4L100.2,250.8L99.1,258.2L99.6,261.3L100.8,262.8L99.9,267.3L100.9,273L103.5,275.1L104.4,284.9L106.7,287.7L106.8,292.3L105.5,298L101.8,303L102,305.2L103.3,306.2L102.8,312.1L100.3,320.2L98.1,323.1L92.9,319.7L85,307.6L82.6,306L83.1,304.8L79.1,298.5L71.9,295L71.6,292.7L73.7,285L73.3,279.8L74.2,276.3L72,271.9L75.9,272L80,267.1L84.8,267.5L86.2,268.5L87.7,268L89.4,265.9L89.9,262L92.3,258.9L93.4,251.3L89.9,247.8L89.7,245.7L88.4,246.7L86.6,251.7L80.2,258L79,257.1L77,250L77.1,246.2L73.4,241.4L72.9,237.7L69.9,235.1L68.4,231.5L66.6,230.1L67.7,226.8L70.3,225.2L68.6,222.7L69.2,221.6L70.7,222.3L69.8,219.7L68.3,218.9L67.7,216.1L64.3,211.2L57.1,209L56.3,207.6L56.8,206.4L55.2,206.4L55.9,204.6L45.1,194.3L44.4,190L41.2,188L38.6,182.4L33.5,178.7L37.8,177.5L46.2,173.2L50.7,173.2L53.7,170.8L57.3,170L54.8,172.9L54.6,176.3L55,177.6L57.5,177.9L58.5,180.7L58,185.6L59.3,186.8L58,188.5L59.5,191.9L59.2,194L64.9,197.6L73.3,194.9L73.5,191.8L72.2,190.8L73.2,186.9L71.3,184.5L71.3,181.2L72.5,178.7L76,177.6L76.7,176.3L75.8,172.1L78.2,169.9L78.4,168L81.9,166.3L84,169.9L83.5,171.4L81.2,172.7L82,182L82.5,183L84,183.2Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M130.1,302.1L132.9,300.6L134.6,298.4L141.5,294.7L143.5,294.9L148,298L150.7,297.4L151.9,302L154,304.5L157.4,305.1L162.4,309.1L163,311.9L161.6,311.9L161.4,312.8L163.8,315.5L163.1,318.9L163.2,319.9L164.1,319.9L162.6,320.4L162.1,319.3L159.6,318.6L152.8,319.1L151.5,318.1L145.4,317.1L143.1,318.4L142.5,319.6L143.7,324.3L148,331.3L146.9,333.8L143,336.8L143.1,339.1L138.6,337.1L137.1,337.6L137.5,340L136.4,340.2L124.5,336.7L123.9,334.6L118.8,332.2L117.1,333.5L116.2,336.7L114.3,337.2L107.4,335.3L103.5,335.8L99.2,331.7L98.1,323.1L100.3,320.2L102.8,312.1L103.3,306.2L102,305.2L101.8,303L105.5,298L106.6,289.1L110.2,289.3L116.1,293.8L120.8,295.9L122.3,298.3L127.5,301.8L130.1,302.1Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M177.9,349.9L179.9,349.4L183,352.2L188.3,353.7L190.6,356.1L189.2,363.5L189.8,369.4L188,371.4L185.2,370.9L184.7,367.1L174.9,368.5L172.6,366.9L171.4,363.7L172.6,362L171.9,360.7L173.1,358.1L172.3,351.4L173.6,349.7L177.9,349.9Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M178.2,326.3L176,329.8L177,332.2L177.8,331.8L177.5,333L176.3,333.3L175.7,334.7L178,336.7L175.7,339.6L172.3,339.5L168,341.4L166.6,340L162.3,339L161.9,341L157.5,342.3L143.1,339.1L143,336.8L146.9,333.8L148,331.5L143.7,324.3L142.5,319.6L145.1,317.1L151.5,318.1L152.8,319.1L159.6,318.6L163.1,320.4L164.1,319.9L163.2,319.9L163.1,318.9L163.9,315.9L161.4,312.3L162.9,312L163,310.8L166.6,310.6L173.5,316L178.2,326.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M212.6,307.9L218.4,306.9L222.6,310.2L225.1,310.4L227.2,312.1L234.1,312.3L235.6,316.2L237.9,318L236.6,321.9L236.7,331.3L243.1,333.3L247.1,342L247,345L240.8,348.7L239.8,351.1L236.2,353.4L231.4,351.8L231.1,350.2L228.8,348.8L227.8,346.7L224.9,345.8L219.2,348.3L217.1,352.2L214.8,352.2L212.4,350.3L212.1,346.9L210.3,344L209,344.1L206.6,345L202.7,351.7L196.8,355.2L195.3,358L193.5,357.6L188.3,353.7L189.3,352.1L188.2,346.6L185.7,341.8L187.3,338.2L185.9,333.5L189.1,328.4L189.1,326.4L191.4,324.6L193.2,320.5L204.1,310.2L204.8,308.8L204.1,305.9L212.6,307.9Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M244.5,372.3L245.8,374.5L248.9,376L250.8,380.9L246.3,382.8L243.7,382L243.2,384.9L237.9,389.6L239.2,394.8L233.2,395.3L230.7,397.8L228.1,398.8L228.3,400.5L216.5,400.5L214.1,401.3L214.5,385.3L216.6,382.9L216.7,380.3L217.9,379.9L219.1,380.8L221.4,379.2L223.2,373.4L230.1,377.1L232.1,375.6L233.9,369.5L235.7,369L236.6,367.5L244.5,372.3Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M252.8,372.1L257.9,372.2L265.2,379L265.9,377L271.8,376.1L273.4,374.2L275.9,376.3L277.5,375.1L279.2,376.3L276.9,381.2L277.9,383L283.2,387.1L282.8,390.5L278.8,395.1L275.9,395.6L274.4,397.2L274.7,400.7L272.2,402.7L271.3,407.8L271.8,409.2L274.4,410.4L274.3,413.7L272.6,415.7L269.1,415.8L265.3,410.8L262,411.6L261.5,413.6L255,412L253.7,414L252.9,412.7L241.1,407.2L232.5,406.3L228.9,407.7L229.2,402.6L228.1,398.8L230.7,397.8L233.2,395.3L239.4,394.6L237.9,389.6L243.2,384.9L243.9,381.8L246.3,382.8L250.5,381.6L250.9,379.6L249.9,377.5L248.6,375.7L245.8,374.5L244.5,372.3L246.4,372.1L248.9,370L252.8,372.1Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M173.1,279.5L176.5,280.5L178.3,278.3L184.3,279.6L190.1,279.5L196.1,277.8L205.1,279.2L205.3,281.3L207.7,283.4L207.5,287L209.6,294.3L209,296.1L209.7,298L207.1,303.1L204.6,304.8L204.1,310.2L193.2,320.5L191.4,324.6L189.1,326.4L189.1,328.4L186.2,333L181.6,330.8L180.3,326.9L178.2,326.3L173.5,316L166.6,310.6L163,310.8L162.4,309.1L157.4,305.1L154,304.5L151.9,302L150.7,297.4L148,298L143.5,294.9L141.5,294.7L134.6,298.4L130.7,301.9L128.1,302L122.3,298.3L120.8,295.9L116.1,293.8L111.4,290L109.1,288.9L106.6,289.1L106.5,287.1L104.6,285.6L104.1,283L108.9,279.4L111.6,278.9L115.9,281.8L120.5,280.1L127.3,281.3L128.3,280.1L131.8,280L136.3,282.2L137.9,286.5L139.7,288.2L143.3,285.5L147.7,275.6L153.2,269.9L153.3,267.5L156.2,260.3L156.2,257.7L159.2,254L161,256.1L162.3,264L165.1,266.1L168.5,275.4L169.9,277.7L173.1,279.5Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M195.3,358L194.2,362.1L195.9,364.5L198.7,364.6L201.9,363.3L206,363.8L205.1,366.4L205.5,373L207.3,375L206.6,378.6L209,379.3L209.1,383.6L199.1,388.3L195.9,390.9L180.7,391.5L177.8,390.1L176.6,391.4L176.2,388.2L172.9,387.6L174.9,384.5L176.5,374.8L174.9,368.5L184.7,367.1L185.2,370.9L188.2,371.3L189.8,369.4L189.2,363.5L190.6,356.1L195.3,358Z" fill="var(--map-c4)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M214.5,385.3L214.1,401.7L200.4,403.6L190.1,401.9L181.4,398.5L179.8,394.8L180.7,391.5L195.9,390.9L199.1,388.3L211.7,382.4L213.5,383.3L214.5,385.3Z" fill="var(--map-c3)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M186.2,333L187.3,338.2L185.7,341.8L188.3,346.9L189.3,352.1L188.3,353.7L183,352.2L179.9,349.4L173.6,349.7L172.3,347.5L173,342.3L171.9,342.5L171.2,341.5L172.3,339.5L176,339.4L178,336.7L175.7,335L177.8,331.8L177,332.2L176,329.8L177.4,328.5L177.4,326.7L180.3,326.9L181.6,330.8L186.2,333Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M215.4,352.3L217.1,352.2L219.2,348.3L222.2,346.5L224.9,345.8L227.8,346.7L231.4,351L232.3,362.5L231.1,365.3L234.4,368.9L232.3,375.2L230.7,376.8L229.5,377L227.4,375L225.1,374.9L223.2,373.4L221.4,379.2L219.1,380.8L217.9,379.9L216.7,380.3L216.6,382.9L214.5,385.3L212.4,382.5L209.1,383.6L209,379.3L206.5,378.4L207.3,375L205.5,373L205.1,367L206,363.8L201.9,363.3L196.1,364.6L194.2,361.2L196.3,355.8L202.7,351.7L207.2,344.6L210.3,344L212.1,346.9L212.4,350.3L215.4,352.3Z" fill="var(--map-c3)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M211.1,417.6L202.5,416.4L200.5,419.9L195.8,419.8L194.8,419.2L195.5,417.3L193.9,416.6L190.9,419.4L189.6,419.2L189.5,422.8L187.3,425.4L187.7,429.7L183.7,430L184.4,429L184,425.8L182.7,422L180.4,419.8L179.3,413.9L179.8,411L189.2,410.9L192.8,401.8L200.4,403.6L214.1,401.7L213.6,408L215.2,410.1L210.7,416.5L211.1,417.6Z" fill="var(--map-c5)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M180.7,391.5L179.8,394.8L181.4,398.5L189.3,401.7L192.8,401.8L191,407.9L188.6,411.2L179.8,411L177,405L177.3,399.8L175.4,396.7L176.6,391.4L178.2,390.1L180.7,391.5Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M176.6,391.4L175.4,396.7L177.3,399.8L176.9,404.7L179.8,411L179.3,415.6L176,416.8L175.5,419.4L172.7,419.8L171,418.6L162,417.3L160.9,414.5L157.8,416.2L156.4,414.3L157.2,407.9L156.3,403.4L152.3,402L148.8,398L148.2,394.7L152.3,394.5L158.7,389.5L168.7,389.9L172.9,387.6L176.2,388.2L176.6,391.4Z" fill="var(--map-c3)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M151,440.1L151,443.7L152.8,445.6L153.7,443.4L157.2,442.4L159.5,446.9L164,450.9L165.8,456.8L162.8,462.5L161,469.8L158.8,473.3L157.2,482.9L149,483.4L145,486.3L139.9,486.6L136.9,488.5L130.4,486L123.7,487.2L118,481.8L116,481.1L115.4,478.8L112.8,477.9L112.2,476.8L112,473.2L109.9,470.7L108.5,465.7L109.2,461.9L104.6,456.8L105.5,449.8L110.6,447.3L113.9,448.9L116.3,451.5L118.6,450.1L118.7,448L120.2,446.3L126.5,449.2L137.6,448L139.3,447.2L139.6,443.5L141.7,441.1L145.4,439.8L151,440.1Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M129.6,584.2L127.1,584.7L124.1,586.8L115.7,586.7L108.6,583.8L107.8,581.6L109.9,578.7L112.1,577.4L114,571.8L118.3,564.2L121.3,560.8L122.6,556.1L125.7,552.1L126.4,546.1L132,544.5L135.9,539.2L137.3,533.6L133.1,530.1L133.9,523.7L130.5,520.6L131.9,513.5L126.6,514.2L127.9,510.6L122.6,493.4L123.7,490.8L123.7,487.2L130.4,486L136.9,488.5L139.9,486.6L145,486.3L149,483.4L157.2,482.9L158.4,494.1L160.3,499.4L158.5,505.5L160.1,507.3L160.8,510.3L158.8,512.8L156.9,517.7L150.8,524.2L149.4,526.9L148.9,529.7L149.7,531.9L148.1,533.1L148.5,538.2L146.3,538.5L144.6,540.2L138,551.7L137,556.8L133.6,563.4L133.4,567L134.6,572L133.6,573L133.2,571.8L131.2,572.5L129.2,575.8L130.4,581.6L129.6,584.2Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M158.2,416.3L160.9,414.5L161.8,417.1L164.3,418.1L161.8,429.2L158,430L154.5,429L151,440.1L145.4,439.8L141.7,441.1L139.6,443.5L139.3,447.2L137.6,448L126.5,449.2L120.2,446.3L118.7,448L118.6,450.1L115.9,451.5L114.7,449.5L110.6,447.3L109.7,441.8L110.6,440L110.7,435.2L108.5,424.4L108.2,415.6L111.6,415.2L114.3,413L120.7,413.9L127.8,411L131.7,413.7L134.3,411.5L140.6,409.5L147.3,410L151.7,402.3L152.9,402L156.3,403.4L157.2,407.9L156.4,414.3L158.2,416.3Z" fill="var(--map-c2)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M210,417.7L215.1,419.1L216.6,421L213.9,424L213.8,425.7L212.3,426.3L210.2,430.8L198.7,428.2L195.2,426.1L195.6,422.5L194.3,428.3L187.7,429.7L187.3,425.4L189.5,422.8L189.6,419.2L190.9,419.4L193.9,416.6L195.5,417.3L194.8,419.2L195.8,419.8L200.5,419.9L202.5,416.4L206.1,416.3L210,417.7Z" fill="var(--map-c4)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M183.7,430L179.9,430.6L176.1,428.4L173.8,430.9L164.9,434L161.8,429.2L164.3,418.1L171,418.6L172.7,419.8L175.2,419.5L176,416.8L179.6,415.2L180.4,419.8L182.7,422L184,425.8L184.4,429L183.7,430Z" fill="var(--map-c3)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M158,430L161.8,429.2L164.9,434L161.9,435.5L160.9,437.7L159.6,437.4L160.5,437.8L159.9,439.8L155.5,443.4L153.7,443.4L152.8,445.6L151,443.7L151,440.1L153.1,432.2L154.8,428.8L158,430Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M423.3,317.1L428.8,320.7L435.1,321.9L436.8,320.9L440.4,322L441.2,321L443.6,324.5L442.9,325.5L444.9,326.1L444,328.1L442,328.4L442.4,338.5L444,341.1L449.4,343.2L450.5,345.3L449.8,348.4L455.7,358.2L452.4,358.3L450.7,363.9L453.1,368.4L451.9,370.9L454.6,371.7L455.7,374.2L447,371.3L443.5,373.4L442.3,371.7L440.8,373.2L437.3,372.6L433.2,376.3L430.2,375.4L427.8,376.5L415.4,373.7L412.7,375.2L411.2,373.5L409,375.9L407.2,375L403.3,376.5L404.3,370.5L403.3,365.6L404.3,358.1L401,353.4L400.5,348.8L396.3,347L395.5,345.7L401.5,335.1L400,327.7L398.8,326.2L399.9,322.2L399.2,320.5L405.2,314.8L404.2,311.8L399.7,311.3L405.3,303.8L408.3,301.8L409.6,305.7L415.8,314L423.3,317.1Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M486.3,274.6L482.6,277.7L483.2,282.2L485.6,287.3L487.8,289.4L492.4,289.5L497.7,292.1L499.4,294.5L500,297.5L497.2,309.5L490.1,313.5L489.5,314.9L490.8,316.6L494.4,316.6L494.8,319.9L488.7,325L487.5,328.4L488,330.8L492.2,332.6L494.1,336.4L496.5,337.3L493.5,339.6L493,340.8L494,342.7L493.5,344.1L492,344.3L492.4,346.8L491,347.4L490.2,349.9L491.2,353L490.6,357.7L491.4,363.7L485.8,372.1L482.9,372.9L481,374.7L478.5,373.9L477,376L470.1,378.1L466.9,384.3L463.6,385.3L461.2,383.5L459.3,379.9L459.2,375L455.7,374.2L454.6,371.7L451.9,370.9L453.1,368.9L450.7,363.9L451.9,359L453.5,357.7L455.7,358.2L449.8,348.4L450.5,345.3L449.4,343.2L444,341.1L442.4,338.5L442,328.4L444,328.1L444.9,326.1L442.9,325.5L443.6,324.5L441.2,321L440.4,322L436.8,320.9L435.1,321.9L428.8,320.7L425.7,319.1L426.8,312.8L426.1,313.5L424.1,312.2L423.5,309.9L424.9,304L429.9,303.8L431.8,302.2L431.4,300.6L438.2,302.2L440.3,299.9L439.2,298.1L440.3,297.1L444.9,301.5L448.1,301.9L449.6,305.4L452.7,305.4L454.5,307.6L456.1,306.7L457.3,303.3L457.1,298.7L462.1,286.9L461.9,283.2L464.2,280.8L462.7,278L462.9,274.9L466.3,271.5L467.2,268.9L486.3,274.6Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M467.2,268.9L466.3,271.5L462.9,274.9L462.7,278L464.2,280.8L461.9,283.2L462.1,286.9L457.1,298.7L457.3,303.3L455.3,307.4L453.8,307.1L452.7,305.4L449.6,305.4L448.1,301.9L444.9,301.5L441,297.3L439.2,297.9L440.3,299.9L438.2,302.2L428.5,299.1L428.3,297.7L427.2,297.2L426.1,292.1L428.4,280.7L434.5,270L436.5,268L448.9,265.2L449.5,263.1L454.4,261.5L460.1,256.7L462.4,258.9L463.3,266.1L467.2,268.9Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M426.1,253.6L430.5,253.7L431.9,255.4L434.2,255.8L435.9,259.3L438.6,261.5L440.4,261.3L441.4,260L442.9,261.5L449.5,263.1L448.9,265.2L437.7,267.4L435.3,269L428.4,280.7L426.1,292.1L427.4,297.6L428.3,297.7L428.9,299.6L431.4,300.6L431.8,302.2L429.9,303.8L424.7,304.5L423.6,310.7L425.7,313.4L426.8,312.8L427,315.1L425.7,319.1L424,317.1L415.8,314L409.6,305.7L408.3,301.8L413.3,299.2L409.9,293.3L408.2,293.3L408.5,288L407.3,285.8L404.9,284.3L405,286L403.9,286.6L401.1,287.3L400.8,286L402.8,283.1L401.3,281.1L401.7,276.3L407.2,275.6L407.6,272.2L406.8,269.2L414.3,264.8L416.9,260.3L420.2,258.9L422.9,254.1L426.1,253.6Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M242.4,432.2L244.1,432L247.1,435L249.3,434.6L251.2,435.6L253.6,439.7L258.1,442.2L260.8,444.9L263,449.8L261.5,452.1L257.9,451.1L255.3,452.3L253.8,455.4L252.1,456.4L250.1,456L247.4,458.5L246.1,457.9L243.3,459.3L239.8,456.2L238.3,456.1L236.3,457.5L230.5,455.7L229.5,456.7L230.5,458.4L230,459.1L225,459L223.9,460.4L225.2,461.6L225.6,465.9L223.4,468.3L223.1,470.4L219.9,473.4L218.2,480.8L218.3,485.2L215.4,483.9L216.2,482.9L214.8,481.2L211.2,481.9L212.1,480.6L210.8,480.6L211.6,478.9L210,478.4L211.8,474.5L213.3,475.1L215,472.1L211.6,465.4L213.8,461.5L215.8,460.2L215.8,458.7L212.5,454.3L216.5,448L214.5,442.2L215.7,439.5L218.7,438.2L218.6,431.8L223,428.9L223,426.6L226.9,425.6L229,423.9L236.5,426.3L238.9,429.6L242.4,432.2Z" fill="var(--map-c5)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M228.3,400.5L229.2,402.6L228.4,406.1L229,407.8L232.5,406.3L241.1,407.2L252.9,412.7L253.7,414L255,412L261.5,413.6L262,411.6L265.3,410.8L269.1,415.8L272.6,415.7L273.4,419.4L275.2,421.2L275.1,424L279.3,424.1L279.7,429.1L277,430.3L276.7,431.4L279.8,439.6L274.7,443.3L273.2,446.8L271,445.8L266.6,449L263,449.8L260.8,444.9L258.1,442.2L253.6,439.7L251.2,435.6L249.3,434.6L246.4,434.7L244.1,432L241.8,432.1L236.5,426.3L228.3,423.9L226.9,425.6L223,426.6L223,428.9L219.3,431.8L218.6,431.8L219.6,429.7L216.8,431.4L210.2,430.8L212.3,426.3L213.8,425.7L213.9,424L216.6,421.4L216.2,419.7L210.7,416.8L215.2,410.1L213.6,408L214.1,401.3L216.5,400.5L228.3,400.5Z" fill="var(--map-c3)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M282.9,450.6L288.1,448.5L290.6,445.2L293.6,447.9L295.6,448.3L299.9,443.5L303.1,451.9L309.6,460.6L308.3,462L308.9,463.3L308.1,464.9L310.5,474.1L309.9,476.1L306.8,477.1L304,480.4L303.8,485L304.9,487.2L301.8,485.6L299.9,487.8L301,491.6L300,494.2L302.7,497.4L301.5,500.1L300.4,499L299.6,499.6L300.8,500.9L298.7,502.7L297.6,502.6L297.1,501.1L298.4,495.8L296.3,497.9L296.3,495L294.7,495.9L293.4,495L292.2,495.4L293,496.3L292.6,497.5L294.3,496.6L296.5,502.1L296,503.3L293.8,502.2L287.5,496.8L284.4,492L284.8,490.7L286,491.6L285.2,491L286.8,489L285.6,489.9L284.8,489.5L286,488.6L282.9,488.7L283.9,486.9L280.6,487.3L281.9,489.2L283.9,489.9L283.5,493.3L280.6,489.2L277.7,489L277,484.7L276.1,486.1L276.9,489.5L274,487L273.6,486.1L274.8,486.5L274.6,485.5L272.7,484.8L270.9,481.7L267.3,479.1L269.2,474.8L269.6,467.5L267.4,464L264.4,462.7L265.1,460L263,458.6L261.6,455.1L261.8,451.1L271,445.8L273.2,446.8L274.7,443.3L279.8,439.6L282.2,444.4L282.1,449.4L282.9,450.6Z" fill="var(--map-c1)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M289.3,390.1L290.3,389.8L290.3,388.2L291.6,387.1L293.4,388.2L293.9,389.8L297.5,390.7L299.4,389.4L305.9,388.9L309.9,389.8L310.2,392.3L311.5,393.2L313.4,392.6L312.3,391.7L312.7,391L315.8,389.4L323.1,390.4L329.4,388.3L332.8,389L335.1,388.3L335.1,389.2L332.8,394.1L332.4,397.3L326.6,402.5L322.1,413.3L312.7,419L312.6,420.3L316.1,422.9L311,425.3L300.1,425.5L298.9,426.9L299.9,429.2L299.9,443.5L297.1,445.8L296.5,447.7L293.6,447.9L290.6,445.2L288.1,448.5L282.9,450.6L282.1,449.4L282.2,444.4L276.8,432.3L276.9,430.4L279.7,429.1L279.6,425.2L279.1,424L275,423.8L275.2,421.2L273.4,419.4L272.6,415.7L274.3,413.7L274.4,410.4L271.8,409.2L271.3,407.8L272.2,402.7L274.7,400.7L274.8,396.3L279.5,394.4L282.8,390.5L283.2,387.1L285.2,388.8L289.3,390.1Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M261.5,452.1L261.2,453.6L262.8,458.2L265.1,460L264.6,463.1L267.4,464L269.6,467.5L269.2,474.8L267.3,479.1L262.2,478.4L258.5,481.9L254.4,482L253.9,483.2L247.8,483.1L245,485.4L239.3,482.5L225.1,480.1L218.3,482.6L219.9,473.4L223.1,470.4L223.4,468.3L225.6,465.9L225.2,461.6L223.9,460.4L225,459L230,459.1L230.5,458.4L229.5,456.7L231.1,455.7L236.3,457.5L238.3,456.1L239.8,456.2L243.9,459.3L246.1,457.9L248.1,458.3L250.1,456L252.5,456.3L254.4,454.8L254.9,452.6L257.9,451.1L261.5,452.1Z" fill="var(--map-c4)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M314.4,539.5L314,540.3L315.6,540.2L316.6,541.7L315.7,545.8L316.5,546.2L316.1,549.2L314.5,547.5L312,546.7L312.8,545.3L312,542L313.2,537.5L314,537.4L314.4,539.5Z M296.1,512.8L298.8,513.2L301.5,515.3L306.6,524.2L305.8,524.6L302.9,522L302.7,524L298.8,523.4L299.2,524.6L297.5,523.8L297.8,518.7L295.1,512.8L296.1,512.8Z M315.5,484.5L322,490.5L323.3,493.4L326,495.3L326.1,496.5L323.1,501.1L322.2,513.6L326.5,519.9L330.8,530.5L335.1,536.7L336,542.7L335.1,544.1L333.9,536.5L326.9,528.2L326.3,521.5L318.1,512.8L318,512.2L319.4,512.4L316.5,509.6L316.5,508.5L313.9,509.7L313.6,510.9L315.1,519.2L313.4,518.7L312.1,515.2L308.6,513L301.2,510.1L299.2,511.1L297.3,509.7L295.9,504.3L297.5,504.7L300.3,503.2L302.7,497.4L300,494.2L301,491.6L299.9,487.8L301.8,485.6L304.9,487.2L303.8,485L303.8,481.1L304.7,479.4L306.8,477.1L309.9,476.1L308.8,477.7L309.4,481.3L315.5,484.5Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M347.3,306.9L346.5,310.2L347.5,311.1L349.2,310.6L350.4,314.1L351.8,313.7L355.8,317.4L358.6,317.2L362.4,314.9L364.8,315.3L365.1,316.8L366.2,316.8L366.5,315.3L367.6,315.7L370.4,318.2L367.1,325.2L367.5,333L368.4,334.7L366.7,336.9L366.9,341.2L363.9,345.2L357.6,350.9L356.8,356.6L354.3,361.6L354.2,365.5L355.8,370.5L354.9,377.4L345.4,380.3L340.6,384.4L336.3,386.1L335.1,388.3L332.8,389L329.4,388.3L323.1,390.4L319.4,390.1L318,389.1L316.8,390.1L315.8,389.4L315.3,386.4L317.3,381.2L314.7,375.4L314.5,371.6L311.1,368.3L309.4,364.1L310.7,357.9L306.7,345.7L310.4,348.6L314.3,348.2L314.8,347L313.1,343.5L313.7,340.7L311.6,338.7L318.5,340.5L322.7,339.6L325.5,337.6L327.3,333.8L327,332.2L331.5,327.2L339.3,324.7L338.8,316.3L340.4,314.7L338,313.8L337.5,312.7L338.8,310.2L340,310.6L341.3,309.5L341,308.4L339.6,307.3L338.2,307.5L335.4,305L330.3,305.3L328,302.4L327.6,297.2L329.3,298.3L332.4,297.3L334.5,288.9L337.1,287.9L340.8,291.8L341,293.3L339,295.5L345.5,302.6L345.1,305.1L347.3,306.9Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M258,232.6L261.1,232.4L263.5,234.3L265.1,233.4L267,235.1L270.1,234L277.4,235.7L279.2,239.2L285,243.8L292.3,243.6L298.2,247L301.1,246.9L302.3,247.8L304.7,246.6L305.3,248.5L307.4,250.3L304.4,260.1L300.4,266.2L296.1,270.3L296.9,271.8L303.7,275.9L300.2,283.3L300,286.9L294.5,290.2L293.4,290.3L293,289.4L292.3,290.7L289.7,291.1L288.9,294.5L285.1,298.4L282.5,296L280.2,300.2L277.4,302.5L277.9,307.4L274.7,309.3L273,313.1L268.1,313.1L258.3,317.5L253.9,321L244.3,323.5L242.1,320.1L237.9,318L239.9,316L242.3,311.1L241.8,302.2L243.7,293.5L239.7,290.5L239.5,284L241.6,281.8L243,277.4L240.5,276.2L239.6,273.9L240.5,262.4L241.9,260.1L240.8,258.7L244,249.9L248,245.1L247.8,243L250.7,241L249.7,238.9L251,235.6L250.6,233.1L253.4,233.3L255.9,231.3L258,232.6Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M330.9,220.8L334.3,220.8L337.6,222.9L347.1,218.4L348.4,220.1L348,223.8L350.3,221.5L352,224L350.5,228.2L349.8,237.3L345.2,243.7L342.7,244.4L341.4,246L336.7,247.3L337.5,249.9L334.2,255.5L331.3,258.2L331.9,270.4L335,275.1L334.7,279.2L336.5,283.2L337.1,287.9L334.3,289.1L332.4,297.3L329.3,298.3L323.7,295.3L321.8,292.2L320.2,292.9L316.9,292.3L316,293.1L310.6,292.4L305.6,293.7L302.6,291.5L302.2,289.3L300,286.9L300.2,283.3L303.7,275.9L296.9,271.8L296.1,270.3L300.4,266.2L304.4,260.1L307.4,250.3L305.3,248.5L304.7,246.6L302.3,247.8L301.1,246.9L298.2,247L292.3,243.6L285,243.8L279.2,239.2L277.4,235.7L270.1,234L267,235.1L265.1,233.4L267.2,230L267.4,227.5L277.4,222.4L279.2,222.7L284.3,220.1L291.8,221.9L295.1,219.8L296.6,219.9L299.4,222.2L300.3,224.2L304.8,225.9L311.5,226L313.7,227.8L316.9,227.3L321.3,215.4L321.7,210.9L323.3,208.4L324,210.4L330.2,214.5L329.6,215.8L330.2,220.7L330.9,220.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M379.5,210.3L379.3,211.7L382,211.6L387.5,215.7L387.8,219.3L396.8,226.6L398,224.5L401.9,222L404.9,223.4L411.6,233.6L411.7,237L414.9,242.2L415.3,248.1L410.7,247.3L404.1,250.4L403,247.6L396.1,247.5L392.8,245.9L390,246L382.8,251.3L385.6,256.6L384.1,261.2L380.1,261.1L380.9,262.4L378.5,262.8L376.8,261.1L376.8,262.2L375.7,262.5L373.9,261.1L369,261.9L367.9,263.2L365.7,259.8L365.4,257.5L362.6,255.8L360.9,252.4L359,252L358.5,250.1L356.9,251.5L353.4,252.4L351.3,251.8L351,250.2L352.2,247.9L350.9,244.8L352,241.1L351.2,237.7L352.3,235.7L350.1,235.1L350.5,228.2L351.7,226.3L351.9,223.2L350,221.5L348,223.8L348.4,220.1L347.1,218.4L348.9,215.6L355.4,215.5L364.4,219L365.9,220.7L366.5,223.7L369.4,218.8L369.5,215.6L371,213.3L370.8,210.3L372.2,208.6L375.4,206.8L377.3,207.4L379.5,210.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M353.1,252.4L356.9,251.5L358.5,250.1L359,252L360.9,252.4L362.6,255.8L365.4,257.5L367.6,263L369,261.9L372,261.9L368.5,268.4L370.2,279.5L368.5,283.2L366.5,292.7L361.7,293.3L358.2,299.4L360.8,302.7L363.3,304.2L365.9,303.8L366.9,305.1L365.4,310.2L361,311.9L347.3,306.9L345.3,305.4L345.5,302.6L339,295.5L341,293.3L340.8,291.8L337.1,287.9L336.5,283.2L334.7,279.2L335,275.1L331.8,269.8L332.2,264.5L331.3,258.2L334.2,255.5L337.5,249.9L336.7,247.3L341.4,246L342.7,244.4L345.2,243.7L350.1,236.8L350.1,235.1L352.3,235.7L351.2,237.7L352,241.1L350.9,244L352.2,248.2L351,250.7L351.5,252L353.1,252.4Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M300,286.9L302.2,289.3L302.6,291.5L305.6,293.7L310.6,292.4L315.4,293.1L316.9,292.3L322.2,292.4L323.7,295.3L327.6,297.2L328.1,302.9L329.9,305.1L335.4,305L338.2,307.5L340.6,307.8L341.4,309.2L340,310.6L338.8,310.2L337.5,312.7L338,313.8L340.4,314.7L338.8,316.3L339.3,324.7L331.5,327.2L327,332.2L327.3,333.8L325.5,337.6L322.7,339.6L318.5,340.5L311.6,338.7L313.7,340.7L313.1,343.5L314.8,347L314.3,348.2L310.4,348.6L306.7,345.7L310.7,357.9L309.4,364.1L311.1,368.3L314.5,371.6L314.7,375.4L317.3,381.2L315.4,385.5L315.8,389.4L312.6,391.1L313.4,392.6L312.5,393.1L310.3,392.5L309.9,389.8L305.9,388.9L299.4,389.4L297.5,390.7L293.9,389.8L291.9,387.1L290.6,387.6L289.8,390.1L285.2,388.8L277.8,382.9L276.9,380.7L279.2,376.3L277.7,375.1L275.9,376.3L273.4,374.2L271.8,376.1L265.9,377L265.2,379L257.1,371.8L251.4,371.9L248.9,370L246.4,372.1L244.5,372.3L236.9,367.5L235.7,369L234.4,368.9L231.1,365.3L232.3,362.5L231.4,351.8L236.6,353.4L239.8,351.1L240.8,348.7L247.2,344.4L247.1,342L243.1,333.3L236.7,331.3L236.6,321.9L237.9,318L242.1,320.1L244.8,323.5L253.9,321L258.3,317.5L268.1,313.1L273,313.1L274.7,309.3L277.9,307.4L277.4,302.5L280.2,300.2L282.5,296L285.1,298.4L288.9,294.5L289.7,291.1L292.3,290.7L293,289.4L293.4,290.3L294.5,290.2L300,286.9Z" fill="var(--map-c3)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M422,254.9L420.2,258.9L417.2,260L414.3,264.8L406.8,269.2L407.6,272.2L406.9,276.1L402.9,275.9L401.6,276.7L401.3,281.1L402.8,283.1L401.6,283.8L401.1,287.3L405,286L404.9,284.3L407.3,285.8L408.5,288L408.2,293.3L409.9,293.3L413.3,299.2L405.6,303.5L399.7,311.3L399.1,310.2L397.2,310.6L397.1,309.4L395.1,309.3L393.8,307.6L387.7,309.6L375.9,307.9L372,309.8L367.5,309.1L365.4,310.2L366.6,304.3L363.1,304.1L359.8,302L358.2,299.4L361.7,293.3L366.5,292.7L368.5,283.2L370.2,279.5L368.5,268.4L372,261.9L373.9,261.1L375.7,262.5L376.8,262.2L376.8,261.1L378.5,262.8L380.5,262.8L380.1,261.1L384.1,261.2L385.6,256.6L382.8,251.9L383.1,250.9L390,246L392.8,245.9L396.1,247.5L403,247.6L404.1,250.4L410.7,247.3L415.3,248.1L418.9,245.7L420.4,254.3L422,254.9Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M361,311.9L367.5,309.1L372,309.8L375.9,307.9L387.7,309.6L393.8,307.6L395.1,309.3L397.1,309.4L397.2,310.6L399.1,310.2L399.7,311.3L404.2,311.8L405,315.3L399.2,320.5L399.9,322.2L398.8,326.2L400,327.7L401.5,335.1L395.5,345.5L396.3,347L400.5,348.8L401,353.4L404.3,358.1L403.3,364.4L404.3,370.5L403.3,376.5L400.6,377.2L399,375.8L395.7,376L393.6,377.5L389.9,375.8L381.4,374.8L380.7,372L378.7,371.1L376.2,373.5L372.4,372.6L367.4,375.6L365.7,374.7L362.2,376.7L354.9,377.4L355.8,370.5L354.2,365.5L354.3,361.6L356.8,356.6L357.6,350.9L363.9,345.2L366.9,341.2L366.7,336.9L368.4,334.7L367.5,333L367.1,325.2L370.4,318.2L367.6,315.7L366.5,315.3L366.2,316.8L365.1,316.8L364.8,315.3L362.4,314.9L358.6,317.2L355.8,317.4L351.8,313.7L350.4,314.1L349.2,310.6L347.5,311.1L346.3,309.6L347.3,306.9L361,311.9Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M286.5,138.1L286.6,140.1L284.4,142.6L282.4,151.6L281.5,152.3L283.2,161.3L281.5,167.4L282.3,171.9L283.3,172.3L284.3,170.6L288.6,181.6L284.6,185.1L279.1,185.7L279.4,188L281.3,190.2L281.5,193.1L278.9,196.1L278.8,198L276.8,200.8L278.7,204L285.4,206.5L286.7,209.5L289.1,211.6L282.2,215.9L284.3,220.1L279.8,222.5L277.4,222.4L267.4,227.5L263.7,227.9L262.8,218L258.8,210.4L257.5,210.5L256.1,212.8L253.3,213.4L251.2,210.2L247.5,208.3L239.1,209L232.4,205.9L229.9,210.4L227.4,211.1L227.2,217.4L225.7,218.7L223.8,218.8L221.5,216.4L222.2,214.8L221.3,213L225.4,199L224.1,196.7L221.9,196L219.3,192.9L214.1,192.2L213.9,186.2L212.7,184.2L214.2,180.7L216.1,178.7L218.7,179.2L222.8,182.4L227.8,184.5L229.8,181.5L232,180.7L234.7,176.4L241.3,171L242.9,170.7L244.1,169.2L242.8,168.5L243.2,167.9L247.3,166.6L248,168.5L250.1,165.7L253.3,164L252,163L254.2,161.8L254.6,159.3L256,160.2L258.1,157.7L263.7,156.6L265.9,148.7L267.4,146.6L273,149.3L274.3,148.9L284.3,138.3L286.5,138.1Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M366.5,151.8L363.2,152.7L364.5,155.1L364.4,159.5L358.9,161.6L356,158.7L352.5,160.2L350.5,163.5L343.8,158.2L339.3,162.2L337.3,158.8L333.4,158.3L333.4,159.9L331.2,163.1L332.2,165.5L330.9,170L327.5,172.1L326.8,174.4L324.8,175.8L320.1,176.2L316.6,174.6L316.8,170.4L312.6,166.6L307.8,166L303.8,158L299.8,154.3L292.4,150L289.3,151.6L288.7,149.4L283.6,145.7L284.8,141.7L286.6,140.1L286.5,138.1L289.3,138.2L290.4,138.8L291.6,141.8L298.5,148L302.1,148.8L306.9,152.6L314.2,153L316.2,154L316.9,156.4L315.9,161L321.2,162.9L320.6,159.5L324.5,158L331.4,152.9L337.6,150.4L341.5,152.2L342.6,151.8L344.7,149L344.6,143.4L348.6,140.9L350.4,135.7L357.5,133.9L358.1,132.9L358.4,136.6L362,137.6L362.7,139.5L359.3,143.9L359.7,146.4L366.5,151.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M371.6,147.3L378.5,150.5L377.5,151.5L377.8,152.9L384,156.3L385,156.6L386.2,154.6L387.1,157.9L386.1,159.1L388.2,160.9L388.6,159.4L391.7,158.9L392.8,160L394.4,158.9L394.3,160.8L395.8,160.5L395.7,162.8L396.8,164.4L398.9,165.5L401.2,163.5L401.9,166.3L402.9,166.1L404.2,167.5L405.1,171L404.3,172.9L402.4,173.8L403.5,176.8L401.1,183.6L403.6,188.9L406.1,189.7L406.4,188.3L408.6,189.4L410,187.6L425.4,187L427.3,197.7L424.9,202.1L424.6,205.3L422.3,207.9L422.3,209.3L424.3,210.7L424.3,211.7L419.9,214.6L418.8,217.1L414.9,219.5L408.8,219.7L406.6,223.1L404.9,223.4L401.9,222L398,224.5L397,226.7L387.8,219.3L387.5,215.7L382,211.6L379.3,211.7L379.7,206.8L375.9,203.1L373.7,202.8L368.3,198.8L364.5,199.6L356.5,196.5L355.1,193.8L357.9,189.3L356.6,186.5L357.2,183.3L360.6,177.2L364.2,176L364.6,168.2L362.4,164.4L363.1,161.5L365,161.2L364.1,160.6L364.5,155.1L363.2,152.7L368,151.5L369.1,150.2L369.1,148.3L371.6,147.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M285.6,147.6L286.7,147.4L288.7,149.4L289.3,151.6L292.4,150L299.8,154.3L303.8,158L307.8,166L312.6,166.6L316.7,170.2L316.6,174.6L320.1,176.2L324.8,175.8L326.8,174.4L327.5,172.1L330.9,170L332.2,165.5L331.2,163.1L333.4,159.9L333.4,158.3L337.3,158.8L339.3,162.2L343.8,158.2L350.5,163.5L352.5,160.2L356,158.7L358.9,161.6L364.4,159.5L364.1,160.6L365,161.3L363.1,161.5L362.4,164.4L364.6,168.2L364.2,176L360.6,177.2L357.8,182.1L356.6,186.5L357.9,189.3L355.1,193.8L356.7,196.7L360.7,197.5L364.5,199.6L368.3,198.8L373.7,202.8L375.6,202.9L379.5,206.4L379.9,210.1L377.3,207.4L375.4,206.8L372.2,208.6L370.8,210.3L371,213.3L369.5,215.6L369.4,218.8L366.5,223.7L365.9,220.7L364.4,219L354.6,215.4L348.9,215.6L347.1,218.4L337.6,222.9L334.3,220.8L330.2,220.7L330.2,214.5L324,210.4L323.3,208.4L321.7,210.9L320.8,216.5L313.5,209.6L311,204.8L311.4,203.2L313.8,202.6L316.4,199.4L311.4,200.5L308.7,198.3L309.3,194.5L306.2,192.9L306.5,189.2L303.7,182.4L302.7,174.9L300.6,175.3L293.6,173.5L291.2,175.4L288.9,175.1L287.4,177L284.1,170.3L283.3,172.3L282.3,171.9L281.5,167.4L283.2,161.3L281.5,152.3L282.4,151.6L283.6,145.7L285.6,147.6Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M300.6,175.3L302.7,174.9L303.7,182.4L306.5,189.2L306.2,192.9L309.3,194.5L308.7,198.3L311.4,200.5L316.4,199.4L314.9,201.7L311.8,202.9L310.8,204.3L313.5,209.6L320.8,216.5L316.9,227.3L313.7,227.8L311.5,226L304.8,225.9L300.3,224.2L299.4,222.2L296.6,219.9L295.1,219.8L291.8,221.9L284.3,220.1L282.2,215.9L289.1,211.6L286.7,209.5L285.4,206.5L278.7,204L276.8,200.8L278.8,198L278.9,196.1L281.5,193.1L281.3,190.2L279.4,188L279.1,185.7L284.6,185.1L287.6,183.2L288.6,181.6L287.4,177L288.9,175.1L291.2,175.4L294.2,173.5L300.6,175.3Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M417.5,159.8L421.8,162.4L426,169.8L429.5,173.4L442.9,180.4L446.1,185.2L448.1,186.5L449.7,190L449.6,201L445.1,212.9L446.7,221.2L446.2,224.2L444.7,225.5L445.1,228.5L441.8,227.2L441.6,224.1L440.7,223.7L436.5,223.3L432.4,224.5L430.4,222.3L429.1,222.8L427.1,221.6L424.7,222.2L422.5,221L418.9,222.1L414.9,219.5L418.8,217.1L419.9,214.6L424.3,211.7L424.3,210.7L422.3,209.3L422.3,207.9L424.6,205.3L424.9,202.1L427.3,197.7L425.5,187.4L410,187.6L408.6,189.4L406.4,188.3L406.1,189.7L403.6,188.9L401.1,183.6L403.5,176.8L402.4,173.8L404.3,172.9L405.1,171L404.2,167.5L401.7,166L401.2,161.5L399.8,159.1L400.9,155.9L403,155.2L404.8,158.6L407.2,159.5L408.6,156.8L408,151.2L410.7,151.3L412.8,150L417.5,159.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M418.9,222.1L422.5,221L425.4,222.3L427.1,221.6L429.1,222.8L430.4,222.3L432.4,224.5L436.5,223.3L440.7,223.7L441.6,224.1L441.8,227.2L444.8,228.5L445.6,227.8L444.8,225.1L446.2,224.2L447.5,231.3L445.9,236.9L446,242.2L452.1,246.8L455.2,253L460.1,256.7L454.4,261.5L449.5,263.1L442.9,261.5L441.4,260L440.4,261.3L438.6,261.5L435.9,259.3L434.2,255.8L431.9,255.4L430.5,253.7L424.9,253.5L422,254.9L420.6,254.5L418.9,245.7L415.3,248.1L414.9,242.2L411.7,237L411.6,233.6L404.9,223.4L407.3,222.5L409.1,219.6L414.9,219.5L418.9,222.1Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M263.2,857.8L268.5,864.5L274.5,868.4L284.5,877.3L283.7,887.4L276.1,894.4L274.8,901.9L268,909.3L267,909.4L263.6,906.5L261.2,908L259.9,907.7L257.8,903.9L258,902.2L256.3,901.5L254.7,899L249.9,899.9L249.1,890L242.8,881.1L244.1,879.3L246.3,867.3L252.1,865.9L256.7,860.3L255.1,855L258.6,854.4L260.7,857.6L263.2,857.8Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M263.4,857.7L260.7,857.6L259.5,854.9L256.9,854.4L254.8,855.5L256.4,857.6L256.1,858.9L254.7,859.5L252.9,859.2L251,856.4L247.4,858.1L240.2,859.3L238.1,856.3L237.8,851.5L233.9,856L229,856L223.7,853L222.1,847.9L222.3,843.9L223.9,840.2L231.3,840L234.5,837.5L241,839.1L239.6,836.5L235.6,834.8L239.1,834.5L243,837.3L249.2,838.9L253.4,841.2L263.4,857.7Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+              <path d="M368.6,125.1L376.9,126.4L382.2,129.4L387.6,129.9L392.9,133.7L396.3,130.9L400.5,131.5L404.7,137.9L407.9,145.3L412.8,150L410.7,151.3L408,151.2L408.6,156.8L407.2,159.5L404.8,158.6L403.2,155.3L400.9,155.9L399.8,159.4L401.2,161.5L401.2,163.5L398.7,165.5L395.7,162.8L395.8,160.5L394.3,160.8L394.6,159L392.8,160L391.7,158.9L388.6,159.4L388.2,160.9L386.1,159.1L387.1,157.9L386.2,154.6L384.8,156.7L378.8,153.5L377.5,151.9L378.6,150.6L375.4,148.5L371,147.2L369.1,148.3L369.1,150.2L368,151.5L366.5,151.8L361.9,148.6L359.7,146.4L359.3,143.9L362.1,140.9L362.7,139.5L362,137.6L358.4,136.6L358.2,132.8L354.4,129.2L356,126.4L358.8,124.9L364.2,123.9L368.6,125.1Z" fill="var(--map-nodata)" stroke="var(--card)" stroke-width="0.6"/>
+          <g><circle cx="197" cy="412.6" r="2.6" fill="var(--card)" stroke="var(--map-c5)" stroke-width="1.1"/><text x="203" y="409.6" font-size="10" font-weight="800" fill="var(--text)">156</text><text x="203" y="419.6" font-size="7.5" font-weight="700" fill="var(--muted)">กรุงเทพฯ</text></g>
+          <g><circle cx="232.4" cy="448.2" r="2.6" fill="var(--card)" stroke="var(--map-c5)" stroke-width="1.1"/><text x="238.4" y="445.2" font-size="10" font-weight="800" fill="var(--text)">104</text><text x="238.4" y="455.2" font-size="7.5" font-weight="700" fill="var(--muted)">ชลบุรี</text></g>
+          <g><circle cx="245.3" cy="469.6" r="2.6" fill="var(--card)" stroke="var(--map-c5)" stroke-width="1.1"/><text x="251.3" y="466.6" font-size="10" font-weight="800" fill="var(--text)">51</text><text x="251.3" y="476.6" font-size="7.5" font-weight="700" fill="var(--muted)">ระยอง</text></g>
+          <g><circle cx="287.1" cy="339.3" r="2.6" fill="var(--card)" stroke="var(--map-c5)" stroke-width="1.1"/><text x="293.1" y="336.3" font-size="10" font-weight="800" fill="var(--text)">29</text><text x="293.1" y="346.3" font-size="7.5" font-weight="700" fill="var(--muted)">นครราชสีมา</text></g>
+            </svg>
+          </div>
+          <div class="heatmap-listcol">
+            <div class="list-title">อันดับจังหวัดปลายทางตามจำนวนเที่ยว (Top 12)</div>
+            <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">กรุงเทพมหานคร</div><div class="bar-sub">156 เที่ยว · 20.0%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:100%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">77.7 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">ชลบุรี</div><div class="bar-sub">104 เที่ยว · 13.3%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:66.7%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">170.0 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">สมุทรปราการ</div><div class="bar-sub">76 เที่ยว · 9.7%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:48.7%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">92.9 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">พระนครศรีอยุธยา</div><div class="bar-sub">51 เที่ยว · 6.5%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:32.7%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">65.9 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">ระยอง</div><div class="bar-sub">51 เที่ยว · 6.5%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:32.7%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">220.3 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย สูงสุดในกลุ่ม</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">สระบุรี</div><div class="bar-sub">46 เที่ยว · 5.9%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:29.5%; background:var(--ramp-d2);"></div></div>
+          <div style="text-align:right;"><div class="bar-val">57.0 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">ปทุมธานี</div><div class="bar-sub">42 เที่ยว · 5.4%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:26.9%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">41.7 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย ต่ำสุดในกลุ่ม</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">ฉะเชิงเทรา</div><div class="bar-sub">38 เที่ยว · 4.9%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:24.4%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">121.9 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">สมุทรสาคร</div><div class="bar-sub">36 เที่ยว · 4.6%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:23.1%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">105.8 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">นครราชสีมา</div><div class="bar-sub">29 เที่ยว · 3.7%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:18.6%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">187.8 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">นครปฐม</div><div class="bar-sub">27 เที่ยว · 3.5%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:17.3%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">100.1 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 148px 1fr 148px;">
+          <div><div class="bar-name">ปราจีนบุรี</div><div class="bar-sub">22 เที่ยว · 2.8%</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:14.1%; background:#8BBADE;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">134.3 กม./เที่ยว</div><div class="bar-val-sub">ระยะทางเฉลี่ย</div></div>
+        </div>
+            <div style="font-size:10.5px; color:var(--muted); margin-top:10px;">อีก 14 จังหวัดที่เหลือ (สุพรรณบุรี 15, ราชบุรี 14, นนทบุรี 13, เพชรบุรี 13, กาญจนบุรี 12, ลพบุรี 10, สมุทรสงคราม 7, นครนายก 5, นครสวรรค์ 4, จันทบุรี 3, ประจวบคีรีขันธ์ 2, อ่างทอง 2, อุทัยธานี 1, เพชรบูรณ์ 1) รวมกัน 102 เที่ยว (13.1%)</div>
+          </div>
+        </div>
+
+        <div class="heatmap-note">แผนที่นี้ใช้ <b>ขอบเขตจังหวัดจริงของประเทศไทย</b> (Thailand province boundary, opensource dataset) พร้อมการฉายภาพ (projection) แบบเรียบง่าย — สีของแต่ละจังหวัดสะท้อนจำนวนเที่ยวที่ระบุจากข้อความ &quot;สถานที่ส่ง&quot; เท่านั้น เนื่องจากไฟล์ข้อมูลต้นทางไม่มีพิกัด GPS ระดับจุด จึงบอกความหนาแน่นได้เฉพาะ<b>ระดับจังหวัดปลายทาง</b> ไม่สามารถระบุเส้นทางหรือจุดส่งที่แม่นยำกว่านี้ได้ — ตัวเลขที่แม่นยำดูได้จากตารางด้านขวา</div>
+      </div>
+
+      <details class="insight-box" style="margin-top:16px;">
+        <summary><span class="ic">📍</span><span class="lbl">Insight: พื้นที่วิ่งงาน (Heatmap)</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          <b>พื้นที่หนาแน่นที่สุด:</b> กรุงเทพฯ ปริมณฑล (กรุงเทพฯ, สมุทรปราการ, ปทุมธานี, นนทบุรี, สมุทรสาคร, นครปฐม) รวมกัน 350 เที่ยว (44.9%) และกลุ่ม Eastern Seaboard (ชลบุรี, ระยอง, ฉะเชิงเทรา, ปราจีนบุรี) รวมกัน 215 เที่ยว (27.6%) — สองกลุ่มนี้รวมกันคิดเป็น 72.4% ของเที่ยววิ่งทั้งหมด สอดคล้องกับพื้นที่นิคมอุตสาหกรรมหลักของบริษัท<br><br>
+          <b>ระยะทางเฉลี่ยต่อเที่ยวสูงสุด:</b> จังหวัดที่อยู่ไกล เช่น จันทบุรี (310.7 กม./เที่ยว), ประจวบคีรีขันธ์ (291.0 กม./เที่ยว), เพชรบูรณ์ (286.0 กม./เที่ยว), อุทัยธานี (243.0 กม./เที่ยว) มีจำนวนเที่ยวน้อย (1-3 เที่ยว) แต่ระยะทางเฉลี่ยต่อเที่ยวสูงกว่ากลุ่มหลักมาก ควรพิจารณาต้นทุนต่อเที่ยว/การจัดสรรรถแยกสำหรับงานพื้นที่ไกลเหล่านี้เป็นกรณีพิเศษ (จันทบุรีและอุทัยธานีเป็นพื้นที่ใหม่ที่ไม่มีงานวิ่งในเดือนก่อน)<br><br>
+          <b>Analytical Flag:</b> ยังไม่มี Threshold ที่บริษัทกำหนดสำหรับความหนาแน่นพื้นที่ ช่วงสี 5 ระดับบนแผนที่ (1–9 / 10–24 / 25–49 / 50–99 / 100+ เที่ยว) เป็นการแบ่งช่วงเชิงวิเคราะห์จากการกระจายตัวของข้อมูลเดือนนี้เท่านั้น (ไม่ใช่เกณฑ์บริษัท) ควรทบทวนร่วมกับทีมวางแผนเส้นทางหากต้องการใช้ตัดสินใจจัดสรรรถเพิ่มในพื้นที่ใด
+        </div>
+      </details>
+    </div>
+
+    <div class="footer">
+      แหล่งข้อมูล: ค่าซ่อม.xlsx (Data_maintenance), Shipment TMT.xlsx, Truck Type.xlsx · จัดทำจากข้อมูลจริงทั้งหมด ไม่มีตัวเลขประมาณการหรือสร้างขึ้นเอง · เกณฑ์ Warning/Flag ในรายงานนี้เป็น Analytical Flag จากการเทียบค่าเฉลี่ย/สัดส่วนภายในกลุ่ม ไม่ใช่เกณฑ์ที่บริษัทกำหนดไว้เป็นทางการ · อัปเดตล่าสุด: 1 ตุลาคม 2026
+    </div>
+
+  </div>
+
+  <div class="wrap" style="display:{{kpiDisplay}};">
+
+    <!-- ================= KPI PAGE: REPEAT REPAIR RATE ================= -->
+    <div class="section" style="padding-top:36px;">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">K</span>KPI: อัตราซ่อมซ้ำเคสเดิม (Repeat Repair Rate)</div>
+        <div class="month-select-wrap">
+          <span class="month-select-label">เลือกเดือน:</span>
+          <select class="month-select">
+            <option value="2025-10">ตุลาคม 2025</option>
+            <option value="2025-11">พฤศจิกายน 2025</option>
+            <option value="2025-12">ธันวาคม 2025</option>
+            <option value="2026-01">มกราคม 2026</option>
+            <option value="2026-02">กุมภาพันธ์ 2026</option>
+            <option value="2026-03">มีนาคม 2026</option>
+            <option value="2026-04">เมษายน 2026</option>
+            <option value="2026-05">พฤษภาคม 2026</option>
+            <option value="2026-06">มิถุนายน 2026</option>
+            <option value="2026-07">กรกฎาคม 2026</option>
+            <option value="2026-08">สิงหาคม 2026</option>
+            <option value="2026-09">กันยายน 2026</option>
+          </select>
+        </div>
+      </div>
+      <div class="section-desc">{{kdFullLabel}}{{kdPartialNote}} · สัดส่วนงานซ่อมเหตุขัดข้อง (Run to Failed) ของรถคันเดิม ที่เป็น&quot;เคสเดิม&quot;จริง (คำอธิบายงานตรงกัน) เกิดซ้ำภายในเดือนปฏิทินเดียวกันกับงานซ่อมครั้งก่อน — เลือกดูย้อนหลังได้ถึง 12 เดือน (ต.ค. 2025 – ก.ย. 2026)</div>
+
+      <details class="insight-box" style="margin-top:0;">
+        <summary><span class="ic">🧮</span><span class="lbl">วิธีคำนวณ (Analytical Proxy — ไม่ใช่เกณฑ์บริษัท)</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          ปรับนิยามใหม่ 3 ก.ย. 2026 — ข้อมูลค่าซ่อมในไฟล์ต้นทางไม่มีเลข Case/Notification ผูกงานซ่อมที่มาจากปัญหาเดียวกันไว้โดยตรง เดิมใช้วิธีจัดกลุ่มตามหมวดระบบ (9 หมวด) ซึ่งนับรวมงานคนละปัญหาที่บังเอิญอยู่หมวดเดียวกันด้วย (เช่น ปะยางคนละตำแหน่ง) ทำให้อัตราสูงเกินจริง จึงปรับให้เข้มขึ้นเป็น: (1) กรองเฉพาะงานซ่อม <b>Run to Failed</b> (ไม่รวม Preventive Maintenance ตามแผน) (2) จัดกลุ่มตาม <b>ทะเบียนรถ + ข้อความอธิบายงานซ่อม (Operation short text) ที่ตรงกันทุกตัวอักษรเป๊ะ</b> (ตัดเฉพาะช่องว่างส่วนเกิน ไม่ได้แก้ไขคำผิด/สะกดต่างกัน) (3) นับเป็น &quot;ซ่อมซ้ำ&quot; เมื่อทะเบียนเดิม + ข้อความเดิม กลับมาซ่อมอีกครั้ง<b>ภายในเดือนปฏิทินเดียวกัน</b>กับงานก่อนหน้า (ไม่นับออเดอร์ที่เปิดวันเดียวกัน, ไม่นับถ้าข้ามไปซ่อมซ้ำในเดือนถัดไป) — ปรับจากเกณฑ์เดิมที่ใช้ &quot;ภายใน 60 วัน&quot; แบบนับข้ามเดือนได้ เพราะทีมซ่อมบำรุงต้องรายงานผลแบบเดือนต่อเดือน (ยึดตามคำขอผู้ใช้ 3 ก.ย. 2026) — วิธีนี้เข้มกว่าเดิมมาก จึงอาจ<b>นับตกกรณีที่เป็นปัญหาเดียวกันจริงแต่เกิดคาบเกี่ยวรอยต่อเดือน</b> (เช่น ซ่อมปลายเดือนแล้วซ่อมซ้ำต้นเดือนถัดไปห่างกันไม่กี่วัน จะไม่ถูกนับเป็นซ่อมซ้ำภายใต้นิยามนี้) หรือบรรยายด้วยคำคนละแบบ (เช่น พิมพ์เว้นวรรค/สะกดต่างกัน) ทีมควรยืนยันนิยาม &quot;เคสเดิม&quot; ที่ต้องการอย่างเป็นทางการ และผลักดัน SAP บันทึก Case ID จริงเพื่อความแม่นยำในระยะยาว
+        </div>
+      </details>
+
+      <div class="kpi-grid" style="grid-template-columns:repeat(4,minmax(0,1fr)); margin-top:18px;">
+        <div class="card kpi-card">
+          <div class="kpi-label">อัตราซ่อมซ้ำเคสเดิม (ทุกหมวด)</div>
+          <div><div class="kpi-value">{{kdRateAll}}</div><div class="kpi-unit">{{kdNumDen}}</div></div>
+          <div class="kpi-chg-row">
+            <span class="chip {{chipMomAllCls}}">{{chipMomAllTxt}}</span>
+            <span class="chip {{chipYoyAllCls}}">{{chipYoyAllTxt}}</span>
+          </div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">อัตราซ่อมซ้ำเคสเดิม (ไม่รวมค่ายาง)</div>
+          <div><div class="kpi-value">{{kdRateNt}}</div><div class="kpi-unit">{{kdNumDenNt}}</div></div>
+          <div class="kpi-chg-row">
+            <span class="chip {{chipMomNtCls}}">{{chipMomNtTxt}}</span>
+            <span class="chip {{chipYoyNtCls}}">{{chipYoyNtTxt}}</span>
+          </div>
+          <div style="font-size:10px; color:var(--muted); line-height:1.5;">ค่ายางถูกแยกออกเพราะการปะยางเป็นงานซ่อมบำรุงตามการสึกหรอปกติ ไม่ใช่สัญญาณคุณภาพงานซ่อม</div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">งานซ่อมเหตุขัดข้องทั้งหมด</div>
+          <div><div class="kpi-value">{{kdDen}}</div><div class="kpi-unit">งาน (Run to Failed)</div></div>
+          <div class="kpi-chg-row"><span class="chip chip-flat">เดือนก่อน {{kdPrevDen}} งาน</span></div>
+        </div>
+        <div class="card kpi-card">
+          <div class="kpi-label">เข้าเกณฑ์ซ่อมซ้ำเคสเดิม</div>
+          <div><div class="kpi-value">{{kdNum}}</div><div class="kpi-unit">งาน · ดูรายการด้านล่าง</div></div>
+          <div class="kpi-chg-row"><span class="chip chip-flat">เดือนก่อน {{kdPrevNum}} งาน</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px; padding:20px 22px;">
+        <div style="display:flex; align-items:baseline; justify-content:space-between; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+          <div style="font-size:13.5px; font-weight:700; color:var(--text);">แนวโน้มอัตราซ่อมซ้ำรายเดือน (12 เดือนย้อนหลัง)</div>
+        </div>
+        <div class="legend-row" style="margin-top:0;">
+          <span><span class="legend-dot" style="background:#4C8FA6;"></span>ทุกหมวด</span>
+          <span><span class="legend-dot" style="background:#8BBADE;"></span>ไม่รวมค่ายาง</span>
+        </div>
+        <svg viewBox="0 0 760 170" width="100%" height="190" preserveAspectRatio="none" style="overflow:visible; margin-top:10px;">
+          <line x1="10" y1="15" x2="750" y2="15" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>
+          <line x1="10" y1="94" x2="750" y2="94" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>
+          <line x1="10" y1="155" x2="750" y2="155" stroke="var(--border)" stroke-width="1" stroke-dasharray="2 4"/>
+          <polyline points="10.0,155.0 77.3,155.0 144.5,155.0 211.8,155.0 279.1,155.0 346.4,155.0 413.6,155.0 480.9,155.0 548.2,31.3 615.5,155.0 682.7,155.0 750.0,155.0"
+            fill="none" stroke="#8BBADE" stroke-width="2" stroke-dasharray="4 3" stroke-linejoin="round" stroke-linecap="round"/>
+          <polyline points="10.0,155.0 77.3,155.0 144.5,155.0 211.8,155.0 279.1,155.0 346.4,155.0 413.6,155.0 480.9,155.0 548.2,80.3 615.5,155.0 682.7,155.0 750.0,155.0"
+            fill="none" stroke="#4C8FA6" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+          <!-- ทุกหมวด: จุด+ตัวเลขรายเดือน (ไฮไลต์เดือนที่เลือกด้วยสีส้ม) -->
+          <circle cx="10.0" cy="155.0" r="{{a0R}}" fill="{{a0Fill}}" stroke="{{a0Stroke}}" stroke-width="{{a0SW}}"/>
+          <text x="10.0" y="147.0" font-size="{{a0Size}}" font-weight="{{a0Weight}}" fill="{{a0Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="77.3" cy="155.0" r="{{a1R}}" fill="{{a1Fill}}" stroke="{{a1Stroke}}" stroke-width="{{a1SW}}"/>
+          <text x="77.3" y="147.0" font-size="{{a1Size}}" font-weight="{{a1Weight}}" fill="{{a1Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="144.5" cy="155.0" r="{{a2R}}" fill="{{a2Fill}}" stroke="{{a2Stroke}}" stroke-width="{{a2SW}}"/>
+          <text x="144.5" y="147.0" font-size="{{a2Size}}" font-weight="{{a2Weight}}" fill="{{a2Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="211.8" cy="155.0" r="{{a3R}}" fill="{{a3Fill}}" stroke="{{a3Stroke}}" stroke-width="{{a3SW}}"/>
+          <text x="211.8" y="147.0" font-size="{{a3Size}}" font-weight="{{a3Weight}}" fill="{{a3Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="279.1" cy="155.0" r="{{a4R}}" fill="{{a4Fill}}" stroke="{{a4Stroke}}" stroke-width="{{a4SW}}"/>
+          <text x="279.1" y="147.0" font-size="{{a4Size}}" font-weight="{{a4Weight}}" fill="{{a4Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="346.4" cy="155.0" r="{{a5R}}" fill="{{a5Fill}}" stroke="{{a5Stroke}}" stroke-width="{{a5SW}}"/>
+          <text x="346.4" y="147.0" font-size="{{a5Size}}" font-weight="{{a5Weight}}" fill="{{a5Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="413.6" cy="155.0" r="{{a6R}}" fill="{{a6Fill}}" stroke="{{a6Stroke}}" stroke-width="{{a6SW}}"/>
+          <text x="413.6" y="147.0" font-size="{{a6Size}}" font-weight="{{a6Weight}}" fill="{{a6Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="480.9" cy="155.0" r="{{a7R}}" fill="{{a7Fill}}" stroke="{{a7Stroke}}" stroke-width="{{a7SW}}"/>
+          <text x="480.9" y="147.0" font-size="{{a7Size}}" font-weight="{{a7Weight}}" fill="{{a7Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="548.2" cy="80.3" r="{{a8R}}" fill="{{a8Fill}}" stroke="{{a8Stroke}}" stroke-width="{{a8SW}}"/>
+          <text x="548.2" y="91.3" font-size="{{a8Size}}" font-weight="{{a8Weight}}" fill="{{a8Color}}" text-anchor="middle">3.2%</text>
+          <circle cx="615.5" cy="155.0" r="{{a9R}}" fill="{{a9Fill}}" stroke="{{a9Stroke}}" stroke-width="{{a9SW}}"/>
+          <text x="615.5" y="147.0" font-size="{{a9Size}}" font-weight="{{a9Weight}}" fill="{{a9Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="682.7" cy="155.0" r="{{a10R}}" fill="{{a10Fill}}" stroke="{{a10Stroke}}" stroke-width="{{a10SW}}"/>
+          <text x="682.7" y="147.0" font-size="{{a10Size}}" font-weight="{{a10Weight}}" fill="{{a10Color}}" text-anchor="middle">0.0%</text>
+          <circle cx="750.0" cy="155.0" r="{{a11R}}" fill="{{a11Fill}}" stroke="{{a11Stroke}}" stroke-width="{{a11SW}}"/>
+          <text x="750.0" y="147.0" font-size="{{a11Size}}" font-weight="{{a11Weight}}" fill="{{a11Color}}" text-anchor="middle">0.0%</text>
+          <!-- ไม่รวมค่ายาง: จุด+ตัวเลขรายเดือน -->
+          <circle cx="10.0" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="10.0" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="77.3" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="77.3" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="144.5" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="144.5" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="211.8" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="211.8" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="279.1" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="279.1" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="346.4" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="346.4" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="413.6" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="413.6" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="480.9" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="480.9" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="548.2" cy="31.3" r="2" fill="#8BBADE"/>
+          <text x="548.2" y="23.3" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">5.3%</text>
+          <circle cx="615.5" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="615.5" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="682.7" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="682.7" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+          <circle cx="750.0" cy="155.0" r="2" fill="#8BBADE"/>
+          <text x="750.0" y="166.0" font-size="8" font-weight="700" fill="var(--muted)" text-anchor="middle">0.0%</text>
+        </svg>
+        <div style="display:flex; justify-content:space-between; font-size:10.5px; color:var(--muted); font-weight:600; margin-top:6px; padding:0 2px;">
+          <span style="{{ax0}}">ต.ค.25</span><span style="{{ax1}}">พ.ย.25</span><span style="{{ax2}}">ธ.ค.25</span><span style="{{ax3}}">ม.ค.26</span><span style="{{ax4}}">ก.พ.26</span><span style="{{ax5}}">มี.ค.26</span><span style="{{ax6}}">เม.ย.26</span><span style="{{ax7}}">พ.ค.26</span><span style="{{ax8}}">มิ.ย.26</span><span style="{{ax9}}">ก.ค.26</span><span style="{{ax10}}">ส.ค.26</span><span style="{{ax11}}">ก.ย.26</span>
+        </div>
+      </div>
+
+      <details class="insight-box insight-warn" style="margin-top:16px;">
+        <summary><span class="ic">⚠️</span><span class="lbl">Management Insight: What / Why / Action</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          <b>What Happened:</b> {{whatHappenedTxt}}<br><br>
+          <b>Why:</b> {{whyTxt}}<br><br>
+          <b>What Should We Do:</b> {{actionTxt}}
+        </div>
+      </details>
+    </div>
+
+    <!-- ================= KPI: CATEGORY BREAKDOWN ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">K2</span>สัดส่วนซ่อมซ้ำเคสเดิมแยกตามหมวดระบบ</div>
+      </div>
+      <div class="section-desc">เฉพาะเดือน{{kdFullLabel}} ตาม filter เดือนด้านบน · เฉพาะงาน Run to Failed ที่นับเป็นเคสเดิมจริง (คำอธิบายงานตรงกัน และซ่อมซ้ำภายในเดือนปฏิทินเดียวกัน) — หมายเหตุ: จำนวนรายการต่อหมวดต่อเดือนมักมีน้อย ตัวเลข % จึงผันผวนง่ายเดือนต่อเดือน ควรตีความร่วมกับตารางเคสด้านล่าง (K3) เสมอ ไม่ใช้เป็นเกณฑ์เดี่ยวๆ</div>
+
+      <div class="card" style="padding:18px 22px 20px;">
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat0Name}}</div><div class="bar-sub">{{cat0Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat0Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat0Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat1Name}}</div><div class="bar-sub">{{cat1Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat1Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat1Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat2Name}}</div><div class="bar-sub">{{cat2Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat2Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat2Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat3Name}}</div><div class="bar-sub">{{cat3Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat3Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat3Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat4Name}}</div><div class="bar-sub">{{cat4Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat4Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat4Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat5Name}}</div><div class="bar-sub">{{cat5Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat5Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat5Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat6Name}}</div><div class="bar-sub">{{cat6Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat6Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat6Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat7Name}}</div><div class="bar-sub">{{cat7Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat7Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat7Val}}</div></div>
+        </div>
+        <div class="bar-row" style="grid-template-columns: 210px 1fr 130px;">
+          <div><div class="bar-name">{{cat8Name}}</div><div class="bar-sub">{{cat8Sub}}</div></div>
+          <div class="bar-track"><div class="bar-fill" style="width:{{cat8Width}}; background:#4C8FA6;"></div></div>
+          <div style="text-align:right;"><div class="bar-val">{{cat8Val}}</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= KPI: REPEAT CASE LIST ================= -->
+    <div class="section">
+      <div class="section-head">
+        <div class="section-title"><span class="section-num">K3</span>รายการซ่อมซ้ำเคสเดิม เดือน{{kdFullLabel}}</div>
+      </div>
+      <div class="section-desc">{{k3DescTxt}}</div>
+
+      <div class="card" style="padding:8px 22px 12px; overflow-x:auto;">
+        <table class="case-table">
+          <thead>
+            <tr>
+              <th>ทะเบียน</th>
+              <th>หมวดระบบ</th>
+              <th>งานก่อนหน้า</th>
+              <th>งานนี้</th>
+              <th>ห่างกัน</th>
+              <th>รายละเอียดงาน</th>
+              <th style="text-align:right;">ค่าซ่อม</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="display:{{row0Display}};"><td class="case-plate">{{row0Plate}}</td><td>{{row0Cat}}</td><td>{{row0Prev}}</td><td>{{row0This}}</td><td><span class="case-gap">{{row0Gap}}</span></td><td>{{row0Desc}}</td><td style="text-align:right;">{{row0Price}}</td></tr>
+            <tr style="display:{{row1Display}};"><td class="case-plate">{{row1Plate}}</td><td>{{row1Cat}}</td><td>{{row1Prev}}</td><td>{{row1This}}</td><td><span class="case-gap">{{row1Gap}}</span></td><td>{{row1Desc}}</td><td style="text-align:right;">{{row1Price}}</td></tr>
+            <tr style="display:{{row2Display}};"><td class="case-plate">{{row2Plate}}</td><td>{{row2Cat}}</td><td>{{row2Prev}}</td><td>{{row2This}}</td><td><span class="case-gap">{{row2Gap}}</span></td><td>{{row2Desc}}</td><td style="text-align:right;">{{row2Price}}</td></tr>
+            <tr style="display:{{noCasesDisplay}};"><td colspan="7" style="text-align:center; color:var(--muted); padding:16px 0;">ไม่มีงานซ่อมที่เข้าเกณฑ์ &quot;ซ่อมซ้ำเคสเดิม&quot; ในเดือนนี้</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <details class="insight-box" style="margin-top:16px;">
+        <summary><span class="ic">ℹ️</span><span class="lbl">จุดสังเกต</span><span class="chev">▸</span></summary>
+        <div class="txt">
+          {{k3InsightTxt}}
+        </div>
+      </details>
+    </div>
+
+    <div class="footer">
+      แหล่งข้อมูล: ค่าซ่อม.xlsx (Data_maintenance) เฉพาะงาน Priority = &quot;2-Run to Failed&quot; · วิธีคำนวณเป็น Analytical Proxy ที่จัดทำขึ้นเนื่องจากไฟล์ต้นทางไม่มีเลข Case/Notification ผูกงานซ่อมที่มาจากปัญหาเดียวกัน — ไม่ใช่เกณฑ์ที่บริษัทกำหนดไว้เป็นทางการ ควรยืนยันนิยาม &quot;เคสเดิม&quot; ร่วมกับทีมซ่อมบำรุงก่อนใช้เป็น KPI ทางการ · อัปเดตล่าสุด: 1 ตุลาคม 2026
+    </div>
+
+  </div>
+
+  </div>
+
+`;
+
+function render() {
+  const vals = renderVals();
+  const scrollY = window.scrollY;
+  const openDetails = Array.from(document.querySelectorAll('#app details')).map(d => d.open);
+  document.getElementById('app').innerHTML = TEMPLATE.replace(/\{\{(\w+)\}\}/g, (m, k) => (k in vals ? String(vals[k]) : ''));
+  document.querySelectorAll('#app details').forEach((d, i) => { if (openDetails[i]) d.open = true; });
+  document.querySelectorAll('#app [data-action]').forEach(el => {
+    el.addEventListener('click', () => {
+      const a = el.getAttribute('data-action');
+      if (a === 'goReport') { state.page = 'report'; render(); window.scrollTo(0, 0); }
+      else if (a === 'goKpi') { state.page = 'kpi'; render(); window.scrollTo(0, 0); }
+      else if (a === 'toggleTheme') { state.theme = state.theme === 'light' ? 'dark' : 'light'; render(); }
+    });
+  });
+  const sel = document.querySelector('#app .month-select');
+  if (sel) {
+    sel.value = state.kpiMonth;
+    sel.addEventListener('change', e => { state.kpiMonth = e.target.value; render(); });
+  }
+  window.scrollTo(0, scrollY);
+}
+
+render();
+</script>
+</body>
+</html>
